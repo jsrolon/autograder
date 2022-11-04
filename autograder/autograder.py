@@ -26,7 +26,7 @@ def process_project(project):
 
     completed_make = subprocess.run(["make"], cwd=src_location,
                                     capture_output=CAPTURE_OUTPUT)
-    rep.append(f"# {'Compilation':<25} {'OK' if completed_make.returncode == 0 else 'FAILED'}")
+    rep.append(f"# {'Compilation':<25} {'PASS' if completed_make.returncode == 0 else 'FAILED'}")
     if completed_make.returncode == 0:
         test_runner.TestRunner(project_identifier, pathlib.Path(clone_location)).run_all()
 

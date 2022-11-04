@@ -38,14 +38,15 @@ class Reporter:
     def send(self):
         full_message_body = "\n".join(self.message_buffer)
 
-        msg = EmailMessage()
-        msg["Subject"] = "COMP310 Autograder Report"
-        msg["From"] = "sebastian.rolon@mcgill.ca"
-        msg["To"] = "sebastian.rolon@mail.mcgill.ca"
-        msg.set_content(full_message_body)
-
-        mailjet = smtplib.SMTP(host="in-v3.mailjet.com", port=587, timeout=5)
-        mailjet.login(user=os.environ["MJ_USERNAME"], password=os.environ["MJ_PASSWORD"])
-        mailjet.send_message(msg)
+        # msg = EmailMessage()
+        # msg["Subject"] = "COMP310 Autograder Report"
+        # msg["From"] = "sebastian.rolon@mcgill.ca"
+        # msg["To"] = "sebastian.rolon@mail.mcgill.ca"
+        # msg.set_content(full_message_body)
+        #
+        # mailjet = smtplib.SMTP(host="in-v3.mailjet.com", port=587, timeout=5)
+        # mailjet.login(user=os.environ["MJ_USERNAME"], password=os.environ["MJ_PASSWORD"])
+        # mailjet.send_message(msg)
+        print(full_message_body)
 
         logging.debug(f"Sent report for {self.project_name}")
