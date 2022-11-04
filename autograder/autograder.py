@@ -10,7 +10,7 @@ import gitlab
 from . import test_runner, reporter
 
 AUTOGRADER_WORKING_DIR = "/tmp"
-CAPTURE_OUTPUT = False
+CAPTURE_OUTPUT = True
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(filename)s %(message)s', level=logging.INFO)
 
@@ -18,7 +18,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(filename)s %(message)s',
 def process_project(project):
     project_identifier = project.namespace['path']
 
-    logging.info(f"Beggining processing for '{project_identifier}'")
+    logging.debug(f"Beggining processing for '{project_identifier}'")
     rep = reporter.Reporter(project_identifier)
 
     clone_location = f"{AUTOGRADER_WORKING_DIR}/repos/{project.path_with_namespace}"
@@ -33,8 +33,8 @@ def process_project(project):
         subprocess.run(["git", "clean", "-d", "--force"], cwd=clone_location, capture_output=CAPTURE_OUTPUT)
 
     completed_make = subprocess.run(["make"], cwd=src_location,
-                                    capture_output=CAPTURE_OUTPUT)  # todo: what to do with the output
-    rep.append(f"# Compilation\t\t{'OK' if completed_make.returncode == 0 else 'FAILED'}")
+                                    capture_output=CAPTURE_OUTPUT)
+    rep.append(f"# {'Compilation':<25} {'OK' if completed_make.returncode == 0 else 'FAILED'}")
     if completed_make.returncode == 0:
         test_runner.TestRunner(project_identifier, pathlib.Path(clone_location)).run_all()
 
