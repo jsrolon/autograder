@@ -40,5 +40,5 @@ before_script:
 deploy:
   stage: deploy
   script:
-    - ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook ansible/playbook.yml -i ansible/hosts --extra-vars "autograder_gitlab_token=$AUTOGRADER_GITLAB_TOKEN gitlab_url=$CI_SERVER_HOST autograder_gitlab_path=$CI_PROJECT_PATH_SLUG"
+    - ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook ansible/playbook.yml -i ansible/hosts --extra-vars "autograder_gitlab_token=$AUTOGRADER_GITLAB_TOKEN gitlab_url=$CI_SERVER_HOST autograder_gitlab_path=$CI_PROJECT_PATH"
   environment: production
