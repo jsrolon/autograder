@@ -1,4 +1,7 @@
 import logging
+import smtplib
+import os
+from email.message import EmailMessage
 
 PASS = "PASS"
 FAIL = "FAIL"
@@ -33,6 +36,16 @@ class Reporter:
         self.message_buffer.append(f"# {test_name:<25} {TIMEOUT}")
 
     def send(self):
-        full_message = "\n".join(self.message_buffer)
-        print(full_message)
+        full_message_body = "\n".join(self.message_buffer)
+
+        msg = EmailMessage()
+        msg["Subject"] = "COMP310 Autograder Report"
+        msg["From"] = "sebastian.rolon@mcgill.ca"
+        msg["To"] = "sebastian.rolon@mail.mcgill.ca"
+        msg.set_content(full_message_body)
+
+        mailjet = smtplib.SMTP(host="in-v3.mailjet.com", port=587, timeout=5)
+        mailjet.login(user=os.environ["MJ_USERNAME"], password=os.environ["MJ_PASSWORD"])
+        mailjet.send_message(msg)
+
         logging.debug(f"Sent report for {self.project_name}")

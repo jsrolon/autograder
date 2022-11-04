@@ -1,0 +1,6 @@
+discslab-server1.cs.mcgill.ca
+
+[all:vars]
+ansible_remote_tmp=/tmp/.ansible
+remote_user=jrolon
+autograder_user=comp310-autograder

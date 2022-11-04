@@ -1,0 +1,37 @@
+---
+
+- name: "Deploy code"
+  hosts: all
+  become: yes
+  become_user: root
+  remote_user: "{{ remote_user }}"
+  vars:
+    autograder_src_path: "/home/{{ autograder_user }}/comp310-autograder"
+  tasks:
+    - name: "Ensure dependencies are installed"
+      ansible.builtin.apt:
+        name:
+          - git
+          - strace
+          - python3
+          - bubblewrap
+        state: present
+        update_cache: yes
+    - name: "Create autograder user"
+      ansible.builtin.user:
+        name: "{{ autograder_user }}"
+        generate_ssh_key: yes
+        create_home: yes
+        system: yes
+        state: present
+    - name: "Fetch latest version"
+      ansible.builtin.git:
+        repo: "https://oauth2:{{ autograder_gitlab_token }}@{{ gitlab_url }}/{{ autograder_gitlab_path }}.git"
+        dest: "{{ autograder_src_path }}"
+    - name: "Ensure cron entry exists"
+      ansible.builtin.cron:
+        name: "run comp310 autograder"
+        minute: "11"
+        hour: "0"
+        job: "export AUTOGRADER_GITLAB_TOKEN={{ autograder_gitlab_token }}; cd {{ autograder_src_path }} && python3 -m autograder"
+        user: "{{ autograder_user }}"
