@@ -22,12 +22,6 @@ cache:
     - .cache/pip
     - venv/
 
-before_script:
-  - python --version  # For debugging
-  - pip install virtualenv
-  - virtualenv venv
-  - source venv/bin/activate
-
 deploy:
   stage: deploy
   script:
