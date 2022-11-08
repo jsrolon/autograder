@@ -6,7 +6,8 @@
   become_user: root
   remote_user: "{{ remote_user }}"
   vars:
-    autograder_src_path: "/home/{{ autograder_user }}/comp310-autograder"
+    autograder_home: "/home/{{ autograder_user }}"
+    autograder_src_path: "{{ autograder_path }}/comp310-autograder"
   tasks:
     - name: "Ensure dependencies are installed"
       ansible.builtin.apt:
@@ -31,7 +32,7 @@
     - name: "Ensure cron entry exists"
       ansible.builtin.cron:
         name: "run comp310 autograder"
-        minute: "11"
-        hour: "0"
-        job: "export AUTOGRADER_GITLAB_TOKEN={{ autograder_gitlab_token }}; cd {{ autograder_src_path }} && python3 -m autograder"
+        minute: "11" # kinda random just in case we collide with other tasks
+        hour: "5" # servers are in utc
+        job: "cd {{ autograder_src_path }} && python3 -m autograder >> {{ autograder_home }}/autograder.log 2>&1"
         user: "{{ autograder_user }}"

@@ -6,13 +6,20 @@ import multiprocessing
 import pathlib
 
 import gitlab
+import dotenv
 
 from . import test_runner, reporter
 
-AUTOGRADER_WORKING_DIR = "/tmp"
-CAPTURE_OUTPUT = True
-
 logging.basicConfig(format='%(asctime)s %(levelname)s %(filename)s %(message)s', level=logging.INFO)
+
+autograder_env_path = pathlib.Path.home() / ".autograder.env"
+if autograder_env_path.exists():
+    dotenv.load_dotenv(dotenv_path=autograder_env_path)
+else:
+    logging.warning("Env file ~/.autograder.env not found, proceeding with default values. Autograder may not work.")
+
+AUTOGRADER_WORKING_DIR = os.getenv("AUTOGRADER_WORKING_DIR", default=str(pathlib.Path.home()))
+CAPTURE_OUTPUT = os.getenv("AUTOGRADER_CAPTURE_OUTPUT") == "1"
 
 
 def process_project(project):
@@ -45,7 +52,7 @@ def update_local_repo(clone_location, project):
 
 
 def main():
-    gl = gitlab.Gitlab(url="https://gitlab.cs.mcgill.ca", private_token=os.environ["AUTOGRADER_GITLAB_TOKEN"])
+    gl = gitlab.Gitlab(url="https://gitlab.cs.mcgill.ca", private_token=os.getenv("AUTOGRADER_GITLAB_TOKEN"))
     logging.info("Gitlab authentication successful")
 
     base_project = gl.projects.get(795)
