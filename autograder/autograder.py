@@ -10,16 +10,49 @@ import dotenv
 
 from . import test_runner, reporter
 
-logging.basicConfig(format='%(asctime)s %(levelname)s %(filename)s %(message)s', level=logging.INFO)
-
-autograder_env_path = pathlib.Path.home() / ".autograder.env"
-if autograder_env_path.exists():
-    dotenv.load_dotenv(dotenv_path=autograder_env_path)
-else:
-    logging.warning("Env file ~/.autograder.env not found, proceeding with default values. Autograder may not work.")
 
 AUTOGRADER_WORKING_DIR = os.getenv("AUTOGRADER_WORKING_DIR", default=str(pathlib.Path.home()))
-CAPTURE_OUTPUT = os.getenv("AUTOGRADER_CAPTURE_OUTPUT") == "1"
+CAPTURE_OUTPUT = os.getenv("DEBUG") != "1"
+DEBUG = os.getenv("DEBUG") == "1"
+
+
+def main():
+    set_up_logging()
+    load_env()
+
+    gl = gitlab.Gitlab(url="https://gitlab.cs.mcgill.ca", private_token=os.getenv("AUTOGRADER_GITLAB_TOKEN"))
+    logging.info("Gitlab authentication successful")
+
+    base_project = gl.projects.get(os.getenv("AUTOGRADER_GITLAB_BASE_REPO_ID", default=795))
+    forks = base_project.forks.list()
+    logging.info(f"Found {len(forks)} forks of main project, starting autograding...")
+
+    with multiprocessing.Pool() as p:
+        p.map(process_project, forks)
+        logging.info("Autograder completed.")
+
+
+def set_up_logging():
+    handler_list = []
+    trfh = logging.handlers.TimedRotatingFileHandler(
+        filename=pathlib.Path(AUTOGRADER_WORKING_DIR, "autograder.log"),
+        when='d')
+    if DEBUG:
+        handler_list = None
+    else:
+        handler_list.append(trfh)
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(filename)s %(message)s',
+                        level=logging.INFO,
+                        handlers=handler_list)
+
+
+def load_env():
+    autograder_env_path = pathlib.Path.home() / ".autograder.env"
+    if autograder_env_path.exists():
+        dotenv.load_dotenv(dotenv_path=autograder_env_path)
+    else:
+        logging.warning(
+            "Env file ~/.autograder.env not found, proceeding with default values. Autograder may not work.")
 
 
 def process_project(project):
@@ -33,7 +66,7 @@ def process_project(project):
 
     completed_make = subprocess.run(["make"], cwd=src_location,
                                     capture_output=CAPTURE_OUTPUT)
-    rep.append(f"# {'Compilation':<25} {'PASS' if completed_make.returncode == 0 else 'FAILED'}")
+    rep.append(f"# Compilation {'PASS' if completed_make.returncode == 0 else 'FAILED'}")
     if completed_make.returncode == 0:
         test_runner.TestRunner(project_identifier, pathlib.Path(clone_location)).run_all()
 
@@ -49,15 +82,3 @@ def update_local_repo(clone_location, project):
     except FileExistsError:
         subprocess.run(["git", "pull"], cwd=clone_location, capture_output=CAPTURE_OUTPUT)
         subprocess.run(["git", "clean", "-d", "--force"], cwd=clone_location, capture_output=CAPTURE_OUTPUT)
-
-
-def main():
-    gl = gitlab.Gitlab(url="https://gitlab.cs.mcgill.ca", private_token=os.getenv("AUTOGRADER_GITLAB_TOKEN"))
-    logging.info("Gitlab authentication successful")
-
-    base_project = gl.projects.get(795)
-    forks = base_project.forks.list()
-    logging.info(f"Found {len(forks)} forks of main project, starting autograding...")
-
-    with multiprocessing.Pool() as p:
-        p.map(process_project, forks)

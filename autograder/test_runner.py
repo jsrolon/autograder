@@ -45,7 +45,7 @@ class TestRunner:
                 with open(expected_output_path, 'r') as expected_output:
                     expected_output_str = expected_output.read()
                     jac = jaccard(completed_process.stdout, expected_output_str)
-                    # todo: add strace verifications
+                    # todo: add strace verifications?
                     if jac > 0.8:
                         self.rep.succeed(test)
                         return
