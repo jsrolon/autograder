@@ -49,9 +49,10 @@ def load_env():
     autograder_env_path = pathlib.Path.home() / ".autograder.env"
     if autograder_env_path.exists():
         dotenv.load_dotenv(dotenv_path=autograder_env_path)
+        logging.info("env loaded successfully")
     else:
         logging.warning(
-            "Env file ~/.autograder.env not found, proceeding with default values. Autograder may not work.")
+            f"Env file {autograder_env_path} not found, proceeding with default values. Autograder may not work.")
 
 
 def get_forks():
