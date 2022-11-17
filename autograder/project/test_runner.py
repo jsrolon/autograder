@@ -1,8 +1,7 @@
-import logging
 import subprocess
 import pathlib
 
-from . import reporter
+from autograder.project import reporter
 
 
 def jaccard(actual: str, expected: str) -> float:

@@ -4,27 +4,25 @@ import os
 import subprocess
 import multiprocessing
 import pathlib
+import sys
+import shutil
 
 import gitlab
 import dotenv
 
-from . import test_runner, reporter
-
+from .project import test_runner, reporter
 
 AUTOGRADER_WORKING_DIR = os.getenv("AUTOGRADER_WORKING_DIR", default=str(pathlib.Path.home()))
 CAPTURE_OUTPUT = os.getenv("DEBUG") != "1"
 DEBUG = os.getenv("DEBUG") == "1"
 
+GITLAB_URL = os.getenv("AUTOGRADER_GITLAB_URL", "https://gitlab.cs.mcgill.ca")
+
 
 def main():
     set_up_logging()
     load_env()
-
-    gl = gitlab.Gitlab(url="https://gitlab.cs.mcgill.ca", private_token=os.getenv("AUTOGRADER_GITLAB_TOKEN"))
-    logging.info("Gitlab authentication successful")
-
-    base_project = gl.projects.get(os.getenv("AUTOGRADER_GITLAB_BASE_REPO_ID", default=795))
-    forks = base_project.forks.list()
+    forks = get_forks()
     logging.info(f"Found {len(forks)} forks of main project, starting autograding...")
 
     with multiprocessing.Pool() as p:
@@ -36,6 +34,7 @@ def set_up_logging():
     handler_list = []
     trfh = logging.handlers.TimedRotatingFileHandler(
         filename=pathlib.Path(AUTOGRADER_WORKING_DIR, "autograder.log"),
+        backupCount=int(os.getenv("AUTOGRADER_LOG_MAX_FILES", 7)),
         when='d')
     if DEBUG:
         handler_list = None
@@ -55,6 +54,19 @@ def load_env():
             "Env file ~/.autograder.env not found, proceeding with default values. Autograder may not work.")
 
 
+def get_forks():
+    gitlab_token = os.getenv("AUTOGRADER_GITLAB_TOKEN")
+    if gitlab_token is None:
+        logging.error("Gitlab token not provided, cannot proceed.")
+        sys.exit(1)
+
+    gl = gitlab.Gitlab(url=GITLAB_URL, private_token=gitlab_token)
+    logging.info("Gitlab authentication successful")
+    base_project = gl.projects.get(os.getenv("AUTOGRADER_GITLAB_BASE_REPO_ID", default=795))
+    forks = base_project.forks.list()
+    return forks
+
+
 def process_project(project):
     project_identifier = project.namespace['path']
     logging.debug(f"Beggining processing for '{project_identifier}'")
@@ -62,7 +74,12 @@ def process_project(project):
 
     clone_location = f"{AUTOGRADER_WORKING_DIR}/repos/{project.path_with_namespace}"
     src_location = f"{clone_location}/src"
-    update_local_repo(clone_location, project)
+    try:
+        update_local_repo(clone_location, project)
+    except Exception as e:
+        logging.error(f"Error cloning {project_identifier}, stopping processing")
+        logging.exception(e)
+        return
 
     completed_make = subprocess.run(["make"], cwd=src_location,
                                     capture_output=CAPTURE_OUTPUT)
@@ -70,15 +87,16 @@ def process_project(project):
     if completed_make.returncode == 0:
         test_runner.TestRunner(project_identifier, pathlib.Path(clone_location)).run_all()
 
-    rep.send()
+    rep.send_email()
 
 
-def update_local_repo(clone_location, project):
-    try:
-        os.makedirs(clone_location)
-        subprocess.run(
-            ["git", "clone", "--depth=1", "--branch=main", "--single-branch", project.ssh_url_to_repo, clone_location],
-            capture_output=CAPTURE_OUTPUT)
-    except FileExistsError:
-        subprocess.run(["git", "pull"], cwd=clone_location, capture_output=CAPTURE_OUTPUT)
-        subprocess.run(["git", "clean", "-d", "--force"], cwd=clone_location, capture_output=CAPTURE_OUTPUT)
+def update_local_repo(clone_location: str, project):
+    if os.path.isdir(clone_location):
+        shutil.rmtree(clone_location)
+
+    branch_to_clone = os.getenv("AUTOGRADER_CLONE_BRANCH", "main")
+    clone_result = subprocess.run(
+        ["git", "clone", "--depth=1", f"--branch={branch_to_clone}", "--single-branch", project.ssh_url_to_repo, clone_location],
+        capture_output=CAPTURE_OUTPUT)
+    if clone_result.returncode != 0:
+        raise Exception(f"Git clone failed with status code {clone_result.returncode}")
