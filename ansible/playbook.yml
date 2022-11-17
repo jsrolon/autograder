@@ -32,6 +32,7 @@
       ansible.builtin.git:
         repo: "https://oauth2:{{ autograder_gitlab_token }}@{{ gitlab_url }}/{{ autograder_gitlab_path }}.git"
         dest: "{{ autograder_src_path }}"
+        force: yes
     - name: Install specified python requirements
       ansible.builtin.pip:
         requirements: "{{ autograder_src_path }}/requirements.txt"
