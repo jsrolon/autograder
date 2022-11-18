@@ -16,7 +16,7 @@ AUTOGRADER_WORKING_DIR = os.getenv("AUTOGRADER_WORKING_DIR", default=str(pathlib
 CAPTURE_OUTPUT = os.getenv("DEBUG") != "1"
 DEBUG = os.getenv("DEBUG") == "1"
 
-GITLAB_URL = os.getenv("AUTOGRADER_GITLAB_URL", "https://gitlab.cs.mcgill.ca")
+GITLAB_URL = os.getenv("AUTOGRADER_GITLAB_URL", "gitlab.cs.mcgill.ca")
 
 
 def main():
@@ -61,7 +61,7 @@ def get_forks():
         logging.error("Gitlab token not provided, cannot proceed.")
         sys.exit(1)
 
-    gl = gitlab.Gitlab(url=GITLAB_URL, private_token=gitlab_token)
+    gl = gitlab.Gitlab(url=f"https://{GITLAB_URL}", private_token=gitlab_token)
     logging.info("Gitlab authentication successful")
     base_project = gl.projects.get(os.getenv("AUTOGRADER_GITLAB_BASE_REPO_ID", default=795))
     forks = base_project.forks.list()
@@ -95,9 +95,11 @@ def update_local_repo(clone_location: str, project):
     if os.path.isdir(clone_location):
         shutil.rmtree(clone_location)
 
+    gitlab_token = os.getenv("AUTOGRADER_GITLAB_TOKEN")
     branch_to_clone = os.getenv("AUTOGRADER_CLONE_BRANCH", "main")
     clone_result = subprocess.run(
-        ["git", "clone", "--depth=1", f"--branch={branch_to_clone}", "--single-branch", project.ssh_url_to_repo, clone_location],
+        ["git", "clone", "--depth=1", f"--branch={branch_to_clone}", "--single-branch",
+         f"https://oauth2:{gitlab_token}@{GITLAB_URL}/{project.path_with_namespace}.git", clone_location],
         capture_output=CAPTURE_OUTPUT)
     if clone_result.returncode != 0:
         raise Exception(f"Git clone failed with status code {clone_result.returncode}")
