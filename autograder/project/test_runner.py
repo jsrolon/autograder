@@ -1,7 +1,7 @@
 import subprocess
 import pathlib
 
-from autograder.project import reporter
+from autograder.project.reporter import Reporter
 
 
 def jaccard(actual: str, expected: str) -> float:
@@ -11,11 +11,11 @@ def jaccard(actual: str, expected: str) -> float:
 
 
 class TestRunner:
-    rep: reporter.Reporter
+    rep: Reporter
     project_path: pathlib.Path
 
     def __init__(self, project_identifier: str, project_location: pathlib.Path):
-        self.rep = reporter.get_reporter(project_identifier)
+        self.rep = Reporter.get_reporter(project_identifier)
         self.project_path = project_location
 
     def run_all(self):
