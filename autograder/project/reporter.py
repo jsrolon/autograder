@@ -13,7 +13,7 @@ class Reporter:
     TIMEOUT = "TIMEOUT"
 
     _mailjet = None
-    _mapping = None
+    _emails = None
 
     _reporters = {}
 
@@ -21,7 +21,9 @@ class Reporter:
     def get_reporter(project_identifier: str):
         return Reporter._reporters[project_identifier]
 
-    def __init__(self, project_name: str):
+    def __init__(self, project_name: str, emails: list[str]):
+        self._emails = emails
+
         self.project_name = project_name
         self.message_buffer = []
 
@@ -57,10 +59,7 @@ class Reporter:
             msg = EmailMessage()
             msg["Subject"] = "COMP310 Autograder Report"
             msg["From"] = os.getenv("AUTOGRADER_EMAIL_FROM_ADDR", default="sebastian.rolon@mcgill.ca")
-            try:
-                msg["To"] = Reporter._mapping[self.project_name]
-            except KeyError:
-                logging.error(f"Email add")
+            msg["To"] = self._emails
             msg.set_content(full_message_body)
 
             Reporter._mailjet.send_message(msg)

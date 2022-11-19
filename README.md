@@ -1,5 +1,6 @@
 # COMP310-autograder
-## Ansible todos
-- [ ] assert autograder user has been created
-- [ ] assert the cronjob exists
-- [ ] assert containerd is running
+## todos
+- [x] assert autograder user has been created
+- [x] assert the cronjob exists
+- [x] assert containerd is running
+- [ ] document how people should configure their accounts (public email)
