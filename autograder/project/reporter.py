@@ -5,6 +5,7 @@ from email.message import EmailMessage
 import pathlib
 
 import yaml
+from typing import List
 
 
 class Reporter:
@@ -21,7 +22,7 @@ class Reporter:
     def get_reporter(project_identifier: str):
         return Reporter._reporters[project_identifier]
 
-    def __init__(self, project_name: str, emails: list[str]):
+    def __init__(self, project_name: str, emails: List[str]):
         self._emails = emails
 
         self.project_name = project_name
