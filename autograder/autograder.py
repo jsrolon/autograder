@@ -69,7 +69,7 @@ class Autograder:
         return forks
 
     def process_project(self, project):
-        project_identifier = project.namespace['path']
+        project_identifier = project.path_with_namespace
 
         emails = []
         members = project.members.list()
