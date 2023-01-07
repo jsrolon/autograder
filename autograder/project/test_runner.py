@@ -33,6 +33,11 @@ class TestRunner:
         binary_path = pathlib.Path(self.project_path, "src")
         test_input_path = pathlib.Path(assignment_path, f"{test}.txt")
         try:
+            # clean and recompile
+            subprocess.check_call(["make", "clean"], cwd=binary_path)
+            subprocess.check_call(["make"], cwd=binary_path)
+
+            # actually run the test
             completed_process = subprocess.run(f"./mysh < {test_input_path}",
                                                shell=True,
                                                capture_output=True,
