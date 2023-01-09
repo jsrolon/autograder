@@ -67,7 +67,7 @@ class Autograder:
         self._gitlab = gitlab.Gitlab(url=f"https://{self.GITLAB_URL}", private_token=self._gitlab_token)
         logging.info("Gitlab authentication successful")
         base_project = self._gitlab.projects.get(os.getenv("AUTOGRADER_GITLAB_BASE_REPO_ID", default=795))
-        forks = list(map(lambda fork: self._gitlab.projects.get(fork.id), base_project.forks.list()))
+        forks = list(map(lambda fork: self._gitlab.projects.get(fork.id), base_project.forks.list(get_all=True)))
         return forks
 
     def process_project(self, project):
