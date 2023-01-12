@@ -76,8 +76,9 @@ class Autograder:
         emails = []
         members = project.members.list()
         for member in members:
-            usr = self._gitlab.users.get(member.id)
-            emails.append(usr.attributes["public_email"])
+            if member.access_level >= 40:  # only collect mantainers and above
+                usr = self._gitlab.users.get(member.id)
+                emails.append(usr.attributes["public_email"])
 
         if not emails or not emails[0]:
             logging.info(f"No project members in {project_identifier} have public emails, no point in reporting")
