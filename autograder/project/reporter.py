@@ -7,6 +7,30 @@ import pathlib
 import yaml
 from typing import List
 
+from mailjet_rest import Client
+
+mailjet = Client(
+    auth=(os.getenv("MJ_USERNAME"), os.getenv("MJ_PASSWORD")),
+    version='v3.1')
+
+
+def send_email(to, body):
+    to_list = list(map(lambda addr: {"Email": addr}, to))
+    data = {
+        'Messages': [
+            {
+                "From": {
+                    "Email": os.getenv("AUTOGRADER_EMAIL_FROM_ADDR", default="sebastian.rolon@mcgill.ca"),
+                    "Name": "COMP310 Autograder"
+                },
+                "To": to_list,
+                "Subject": "COMP310 Autograder Report",
+                "TextPart": body,
+            }
+        ]
+    }
+    mailjet.send.create(data=data)
+
 
 class Reporter:
     PASS = "PASS"
@@ -36,8 +60,8 @@ class Reporter:
         Reporter._mailjet.login(user=os.environ["MJ_USERNAME"], password=os.environ["MJ_PASSWORD"])
         logging.info("Mailjet login successful")
 
-        with open(pathlib.Path(__file__).parent.parent / "resources/mapping.yml") as f:
-            Reporter._mapping = yaml.safe_load(f)
+        # with open(pathlib.Path(__file__).parent.parent / "resources/mapping.yml") as f:
+        #     Reporter._mapping = yaml.safe_load(f)
 
     def append(self, message: str):
         self.message_buffer.append(message)
@@ -56,13 +80,7 @@ class Reporter:
 
         if os.getenv("DEBUG") == "1":
             print(full_message_body)
-        else:
-            msg = EmailMessage()
-            msg["Subject"] = "COMP310 Autograder Report"
-            msg["From"] = os.getenv("AUTOGRADER_EMAIL_FROM_ADDR", default="sebastian.rolon@mcgill.ca")
-            msg["To"] = self._emails
-            msg.set_content(full_message_body)
-
-            Reporter._mailjet.send_message(msg)
+        # else:
+            send_email(self._emails, full_message_body)
 
         logging.debug(f"Sent report for {self.project_name}")
