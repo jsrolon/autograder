@@ -28,15 +28,8 @@ class Autograder:
     def main(self):
         self.set_up_logging()
         self.load_env()
-        self.load_gitlab()
-        target_only = os.getenv("AUTOGRADER_TARGET_ONLY")
-        if target_only:
-            forks = [
-                self._gitlab.projects.get(target_only)
-            ]
-        else:
-            forks = self.get_forks()
-            logging.info(f"Found {len(forks)} forks of main project, starting autograding...")
+        forks = self.get_forks()
+        logging.info(f"Found {len(forks)} forks of main project, starting autograding...")
 
         with multiprocessing.Pool() as p:
             p.map(self.process_project, forks)
@@ -65,7 +58,7 @@ class Autograder:
             logging.warning(
                 f"Env file {autograder_env_path} not found, proceeding with default values. Autograder may not work.")
 
-    def load_gitlab(self):
+    def get_forks(self):
         self._gitlab_token = os.getenv("AUTOGRADER_GITLAB_TOKEN")
         if self._gitlab_token is None:
             logging.error("Gitlab token not provided, cannot proceed.")
@@ -73,8 +66,6 @@ class Autograder:
 
         self._gitlab = gitlab.Gitlab(url=f"https://{self.GITLAB_URL}", private_token=self._gitlab_token)
         logging.info("Gitlab authentication successful")
-
-    def get_forks(self):
         base_project = self._gitlab.projects.get(os.getenv("AUTOGRADER_GITLAB_BASE_REPO_ID", default=795))
         forks = list(map(lambda fork: self._gitlab.projects.get(fork.id), base_project.forks.list(get_all=True)))
         return forks
