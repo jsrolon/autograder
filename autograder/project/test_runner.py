@@ -32,6 +32,9 @@ class TestRunner:
     def run_test(self, test: str, assignment_path: pathlib.Path):
         binary_path = pathlib.Path(self.project_path, "src")
         test_input_path = pathlib.Path(assignment_path, f"{test}.txt")
+
+        output = None
+        timed_out = False
         try:
             # clean and recompile
             subprocess.check_call(["make", "clean"], cwd=binary_path)
@@ -44,16 +47,26 @@ class TestRunner:
                                                timeout=1,
                                                encoding='UTF-8',
                                                cwd=binary_path)
-            if completed_process.returncode == 0:
-                expected_output_path = pathlib.Path(assignment_path, f"{test}_result.txt")
-                with open(expected_output_path, 'r') as expected_output:
-                    expected_output_str = expected_output.read()
-                    jac = jaccard(completed_process.stdout, expected_output_str)
-                    # todo: add strace verifications?
-                    if jac > 0.8:
-                        self.rep.succeed(test)
-                        return
+            if completed_process.returncode != 0:
+                self.rep.fail(test)
+                return
 
-            self.rep.fail(test)
-        except subprocess.TimeoutExpired:
-            self.rep.timeout(test)
+            output = completed_process.stdout
+        except subprocess.TimeoutExpired as e:
+            timed_out = True
+            output = e.output
+
+        if output:
+            expected_output_path = pathlib.Path(assignment_path, f"{test}_result.txt")
+            with open(expected_output_path, 'r') as expected_output:
+                expected_output_str = expected_output.read()
+                jac = jaccard(output, expected_output_str)
+                # todo: add strace verifications?
+                if jac > 0.8:
+                    self.rep.succeed(test)
+                    return
+        else:
+            if timed_out:
+                self.rep.timeout(test)
+            else:
+                self.rep.fail(test)
