@@ -5,9 +5,11 @@ from autograder.project.reporter import Reporter
 
 
 def jaccard(actual: str, expected: str) -> float:
-    s1 = set(actual.split())
-    s2 = set(expected.split())
-    return float(len(s1.intersection(s2)) / len(s1.union(s2)))
+    actual_set = set(actual.split())
+    expected_set = set(expected.split())
+    intersection = actual_set.intersection(expected_set)
+    union = actual_set.union(expected_set)
+    return float(len(intersection) / len(union))
 
 
 class TestRunner:

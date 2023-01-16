@@ -80,7 +80,7 @@ class Reporter:
 
         if os.getenv("DEBUG") == "1":
             print(full_message_body)
-        # else:
+        else:
             send_email(self._emails, full_message_body)
 
         logging.debug(f"Sent report for {self.project_name}")
