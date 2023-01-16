@@ -1,10 +1,6 @@
 import logging
-import smtplib
 import os
-from email.message import EmailMessage
-import pathlib
-
-import yaml
+import smtplib
 from typing import List
 
 from mailjet_rest import Client
