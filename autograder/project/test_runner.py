@@ -50,8 +50,12 @@ class TestRunner:
                                                cwd=binary_path)
             output = completed_process.stdout
         except subprocess.TimeoutExpired as e:
-            output = e.output.decode('utf-8')
             timed_out = True
+            if e.output:
+                output = e.output.decode('utf-8')
+            else:
+                self.rep.timeout(test)
+                return
 
         expected_output_path = pathlib.Path(assignment_path, f"{test}_result.txt")
         with open(expected_output_path, 'r') as expected_output:
