@@ -4,8 +4,10 @@ from typing import List
 
 from mailjet_rest import Client
 
+from autograder import cfg
+
 mailjet = Client(
-    auth=(os.getenv("MJ_USERNAME"), os.getenv("MJ_PASSWORD")),
+    auth=(cfg.MJ_USERNAME, cfg.MJ_PASSWORD),
     version='v3.1')
 
 
