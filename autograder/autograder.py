@@ -8,7 +8,6 @@ import sys
 import shutil
 import pytz
 from datetime import datetime, date
-from env_flag import env_flag
 
 import gitlab
 
@@ -39,7 +38,7 @@ class Autograder:
         handler_list = []
         trfh = logging.handlers.TimedRotatingFileHandler(
             filename=pathlib.Path(cfg.AUTOGRADER_WORKING_DIR, "autograder.log"),
-            backupCount=int(os.getenv("AUTOGRADER_LOG_MAX_FILES", 7)),
+            backupCount=int(cfg.AUTOGRADER_LOG_MAX_FILES),
             when='d')
         if cfg.DEBUG:
             handler_list = None
@@ -50,12 +49,12 @@ class Autograder:
                             handlers=handler_list)
 
     def get_forks(self):
-        base_project = self._gitlab.projects.get(os.getenv("AUTOGRADER_GITLAB_BASE_REPO_ID", default=795))
+        base_project = self._gitlab.projects.get(cfg.AUTOGRADER_GITLAB_BASE_REPO_ID)
         forks = list(map(lambda fork: self._gitlab.projects.get(fork.id), base_project.forks.list(get_all=True)))
         return forks
 
     def set_up_gitlab(self):
-        self._gitlab_token = os.getenv("AUTOGRADER_GITLAB_TOKEN")
+        self._gitlab_token = cfg.AUTOGRADER_GITLAB_TOKEN
         if self._gitlab_token is None:
             logging.error("Gitlab token not provided, cannot proceed.")
             sys.exit(1)
@@ -102,7 +101,7 @@ class Autograder:
         if os.path.isdir(clone_location):
             shutil.rmtree(clone_location)
 
-        branch_to_clone = os.getenv("AUTOGRADER_CLONE_BRANCH", "main")
+        branch_to_clone = cfg.AUTOGRADER_CLONE_BRANCH
         clone_result = subprocess.run(
             ["git", "clone", f"--branch={branch_to_clone}", "--single-branch",
              f"https://oauth2:{self._gitlab_token}@{cfg.GITLAB_URL}/{project.path_with_namespace}.git", clone_location],
@@ -110,7 +109,7 @@ class Autograder:
         if clone_result.returncode != 0:
             raise Exception(f"Git clone failed with status code {clone_result.returncode}")
 
-        if env_flag("AUTOGRADER_DISABLE_DEADLINE"):
+        if cfg.AUTOGRADER_DISABLE_DEADLINE:
             return
         else:
             # obtain last commit id before deadline

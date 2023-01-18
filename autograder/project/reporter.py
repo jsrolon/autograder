@@ -24,11 +24,12 @@ def mj_send_email(to, body):
                 "Subject": "COMP310 Autograder Report",
                 "TextPart": body,
             }
-        ]
+        ],
+        'SandboxMode': cfg.DEBUG
     }
     result = mailjet.send.create(data=data)
     if result.status_code == 200:
-        logging.info(f"Sent email to {to}")
+        logging.info(f"Sent email to {to} (SANDBOX {cfg.DEBUG})")
     else:
         logging.error(f"Email sending to {to} failed with status {result.status_code}")
 
@@ -72,7 +73,7 @@ class Reporter:
     def send_email(self):
         full_message_body = "\n".join(self.message_buffer)
 
-        if os.getenv("DEBUG") == "1":
+        if cfg.DEBUG:
             print(full_message_body)
-        else:
-            mj_send_email(self._emails, full_message_body)
+
+        mj_send_email(self._emails, full_message_body)
