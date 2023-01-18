@@ -1,6 +1,5 @@
 import logging
 import os
-import smtplib
 from typing import List
 
 from mailjet_rest import Client
@@ -10,7 +9,7 @@ mailjet = Client(
     version='v3.1')
 
 
-def send_email(to, body):
+def mj_send_email(to, body):
     to_list = list(map(lambda addr: {"Email": addr}, to))
     data = {
         'Messages': [
@@ -26,6 +25,7 @@ def send_email(to, body):
         ]
     }
     mailjet.send.create(data=data)
+    logging.info(f"Sent email to {to}")
 
 
 class Reporter:
@@ -52,13 +52,6 @@ class Reporter:
 
         Reporter._reporters[project_name] = self
 
-        Reporter._mailjet = smtplib.SMTP(host="in-v3.mailjet.com", port=587, timeout=5)
-        Reporter._mailjet.login(user=os.environ["MJ_USERNAME"], password=os.environ["MJ_PASSWORD"])
-        logging.info("Mailjet login successful")
-
-        # with open(pathlib.Path(__file__).parent.parent / "resources/mapping.yml") as f:
-        #     Reporter._mapping = yaml.safe_load(f)
-
     def append(self, message: str):
         self.message_buffer.append(message)
 
@@ -77,6 +70,4 @@ class Reporter:
         if os.getenv("DEBUG") == "1":
             print(full_message_body)
         else:
-            send_email(self._emails, full_message_body)
-
-        logging.debug(f"Sent report for {self.project_name}")
+            mj_send_email(self._emails, full_message_body)
