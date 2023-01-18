@@ -38,8 +38,8 @@ class TestRunner:
         timed_out = False
         try:
             # clean and recompile
-            subprocess.check_call(["make", "clean"], cwd=binary_path)
-            subprocess.check_call(["make"], cwd=binary_path)
+            subprocess.check_call(["make", "clean"], cwd=binary_path, stdout=subprocess.DEVNULL)
+            subprocess.check_call(["make"], cwd=binary_path, stdout=subprocess.DEVNULL)
 
             # actually run the test
             completed_process = subprocess.run(f"./mysh < {test_input_path}",

@@ -24,8 +24,11 @@ def mj_send_email(to, body):
             }
         ]
     }
-    mailjet.send.create(data=data)
-    logging.info(f"Sent email to {to}")
+    result = mailjet.send.create(data=data)
+    if result.status_code == 200:
+        logging.info(f"Sent email to {to}")
+    else:
+        logging.error(f"Email sending to {to} failed with status {result.status_code}")
 
 
 class Reporter:
