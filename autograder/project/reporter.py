@@ -25,7 +25,8 @@ def mj_send_email(to, body):
                 "TextPart": body,
             }
         ],
-        'SandboxMode': cfg.DEBUG
+        'SandboxMode': True
+        # 'SandboxMode': cfg.DEBUG
     }
     result = mailjet.send.create(data=data)
     if result.status_code == 200:

@@ -41,6 +41,5 @@
         name: "run comp310 autograder"
         minute: "11" # kinda random just in case we collide with other tasks
         hour: "5" # servers are in utc
-#        job: "cd {{ autograder_src_path }} && python3 -m autograder >> {{ autograder_home }}/autograder-err.log 2>&1"
-        job: "echo"
+        job: "cd {{ autograder_src_path }} && python3 -m autograder >> {{ autograder_home }}/autograder-err.log 2>&1"
         user: "{{ autograder_user }}"
