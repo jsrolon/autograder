@@ -12,6 +12,9 @@ mailjet = Client(
 
 
 def mj_send_email(to, body):
+    # sandbox = cfg.DEBUG # TODO: change this on release
+    sandbox = True
+
     to_list = list(map(lambda addr: {"Email": addr}, to))
     data = {
         'Messages': [
@@ -25,12 +28,11 @@ def mj_send_email(to, body):
                 "TextPart": body,
             }
         ],
-        'SandboxMode': True
-        # 'SandboxMode': cfg.DEBUG
+        'SandboxMode': sandbox
     }
     result = mailjet.send.create(data=data)
     if result.status_code == 200:
-        logging.info(f"Sent email to {to} (SANDBOX {cfg.DEBUG})")
+        logging.info(f"Sent email to {to} (SANDBOX {sandbox})")
     else:
         logging.error(f"Email sending to {to} failed with status {result.status_code}")
 

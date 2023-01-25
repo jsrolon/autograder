@@ -1,6 +1,8 @@
+import logging
 import subprocess
 import pathlib
 
+from autograder import cfg
 from autograder.project.reporter import Reporter
 
 
@@ -38,10 +40,16 @@ class TestRunner:
         timed_out = False
         try:
             # clean and recompile
-            subprocess.check_call(["make", "clean"], cwd=binary_path, stdout=subprocess.DEVNULL)
-            subprocess.check_call(["make"], cwd=binary_path, stdout=subprocess.DEVNULL)
+            completed_make_clean = subprocess.run(["make", "clean"], cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
+            completed_make = subprocess.run(["make"], cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
+
+            if completed_make_clean.returncode != 0 or completed_make.returncode != 0:
+                logging.info(f"Unexpected make failed on {test} for {self.project_path}")
+                self.rep.fail(test)
+                return
 
             # actually run the test
+            # todo: bubblewrap this
             completed_process = subprocess.run(f"./mysh < {test_input_path}",
                                                shell=True,
                                                capture_output=True,
