@@ -35,6 +35,9 @@ class Autograder:
             logging.info("Autograder completed.")
 
     def set_up_logging(self):
+        urllib3_logger = logging.getLogger("urllib3")
+        urllib3_logger.setLevel(logging.ERROR)
+
         handler_list = []
         trfh = logging.handlers.TimedRotatingFileHandler(
             filename=pathlib.Path(cfg.AUTOGRADER_WORKING_DIR, "autograder.log"),
