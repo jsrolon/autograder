@@ -70,7 +70,7 @@ class Autograder:
             if member.access_level >= 40:  # only collect mantainers and above
                 usr = self._gitlab.users.get(member.id)
                 email = usr.attributes["public_email"]
-                if email:
+                if email:  # some accounts have empty public emails
                     emails.append(email)
 
         if not emails or not emails[0]:
@@ -85,7 +85,7 @@ class Autograder:
         try:
             self.update_local_repo(clone_location, project)
         except Exception as e:
-            logging.error(f"Error cloning {project_identifier}, stopping processing")
+            logging.error(f"Error cloning {project_identifier} into {clone_location}, stopping processing")
             logging.exception(e)
             return
 
@@ -99,6 +99,10 @@ class Autograder:
 
     def update_local_repo(self, clone_location: str, project):
         if os.path.isdir(clone_location):
+            # apparently some students' code creates directories without read access, so we ensure rwx permissions
+            completed_chown = subprocess.run(["chmod", "-R", "744", clone_location], capture_output=cfg.CAPTURE_OUTPUT)
+            if completed_chown.returncode != 0:
+                logging.warning(f"Could not change dir permissions on {clone_location}, clone may fail")
             shutil.rmtree(clone_location)
 
         branch_to_clone = cfg.AUTOGRADER_CLONE_BRANCH
