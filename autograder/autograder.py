@@ -84,9 +84,8 @@ class Autograder:
         src_location = f"{clone_location}/src"
         try:
             self.update_local_repo(clone_location, project)
-        except Exception as e:
+        except Exception:
             logging.error(f"Error cloning {project_identifier} into {clone_location}, stopping processing")
-            logging.exception(e)
             return
 
         completed_make = subprocess.run(["make"], cwd=src_location,
@@ -109,8 +108,10 @@ class Autograder:
         clone_result = subprocess.run(
             ["git", "clone", f"--branch={branch_to_clone}", "--single-branch",
              f"https://oauth2:{self._gitlab_token}@{cfg.GITLAB_URL}/{project.path_with_namespace}.git", clone_location],
-            capture_output=cfg.CAPTURE_OUTPUT)
+            capture_output=cfg.CAPTURE_OUTPUT, text=True)
         if clone_result.returncode != 0:
+            if clone_result.stderr:
+                logging.error(f"{clone_result.stderr}")
             raise Exception(f"Git clone failed with status code {clone_result.returncode}")
 
         if cfg.AUTOGRADER_DISABLE_DEADLINE:
