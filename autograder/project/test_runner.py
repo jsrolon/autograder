@@ -40,8 +40,9 @@ class TestRunner:
         timed_out = False
         try:
             # clean and recompile
-            completed_make_clean = subprocess.run(["make", "clean"], cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
-            completed_make = subprocess.run(["make"], cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
+            completed_make_clean = subprocess.run(["make", "clean"],
+                                                  timeout=1, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
+            completed_make = subprocess.run(["make"], timeout=1, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
 
             if completed_make_clean.returncode != 0 or completed_make.returncode != 0:
                 logging.info(f"Unexpected make failed on {test} for {self.project_path}")
@@ -54,17 +55,26 @@ class TestRunner:
                                                shell=True,
                                                capture_output=True,
                                                timeout=1,
-                                               encoding='UTF-8',
                                                cwd=binary_path)
             output = completed_process.stdout
         except subprocess.TimeoutExpired as e:
             timed_out = True
             if e.output:
-                output = e.output.decode('utf-8')
+                output = e.output
             else:
                 self.rep.timeout(test)
                 return
 
+        # handling weird unicode error thing
+        if output:
+            try:
+                output = output.decode('utf-8')
+            except UnicodeError as e:
+                logging.error(f"For {self.project_path} error decoding output on {test}")
+                self.rep.fail(test)
+                return
+
+        # comparing outputs
         expected_output_path = pathlib.Path(assignment_path, f"{test}_result.txt")
         with open(expected_output_path, 'r') as expected_output:
             expected_output_str = expected_output.read()
