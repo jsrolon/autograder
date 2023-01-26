@@ -50,7 +50,7 @@ class TestRunner:
 
             # actually run the test
             # todo: bubblewrap this
-            completed_process = subprocess.run(f"./mysh < {test_input_path}",
+            completed_process = subprocess.run(f"{binary_path}/mysh < {test_input_path}",
                                                shell=True,
                                                capture_output=True,
                                                timeout=1,

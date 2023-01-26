@@ -11,7 +11,7 @@ mailjet = Client(
     version='v3.1')
 
 
-def mj_send_email(to, body):
+def mj_send_email(to, body, id):
     # sandbox = cfg.DEBUG # TODO: change this on release
     sandbox = True
 
@@ -32,9 +32,9 @@ def mj_send_email(to, body):
     }
     result = mailjet.send.create(data=data)
     if result.status_code == 200:
-        logging.info(f"Sent email to {to} (SANDBOX {sandbox})")
+        logging.info(f"Sent email to {id} (SANDBOX {sandbox})")
     else:
-        logging.error(f"Email sending to {to} failed with status {result.status_code}")
+        logging.error(f"Email sending to {id} failed with status {result.status_code}")
 
 
 class Reporter:
@@ -75,8 +75,4 @@ class Reporter:
 
     def send_email(self):
         full_message_body = "\n".join(self.message_buffer)
-
-        if cfg.DEBUG:
-            print(full_message_body)
-
-        mj_send_email(self._emails, full_message_body)
+        mj_send_email(self._emails, full_message_body, self.project_name)

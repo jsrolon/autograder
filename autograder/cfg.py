@@ -22,6 +22,10 @@ AUTOGRADER_CLONE_BRANCH = os.getenv("AUTOGRADER_CLONE_BRANCH", "main")
 AUTOGRADER_DISABLE_DEADLINE = env_flag("AUTOGRADER_DISABLE_DEADLINE")
 
 DEBUG = env_flag("DEBUG")
-CAPTURE_OUTPUT = not DEBUG
+capture_output = os.getenv("CAPTURE_OUTPUT")
+if capture_output:
+    CAPTURE_OUTPUT = capture_output
+else:
+    CAPTURE_OUTPUT = not DEBUG
 
 GITLAB_URL = os.getenv("AUTOGRADER_GITLAB_URL", "gitlab.cs.mcgill.ca")
