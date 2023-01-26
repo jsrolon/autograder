@@ -18,6 +18,7 @@ from autograder.project import reporter, test_runner
 class Autograder:
     _gitlab = None
     _gitlab_token = None
+    _gitlab_autograder_user_id = None
 
     def main(self):
         self.set_up_logging()
@@ -62,6 +63,8 @@ class Autograder:
             logging.error("Gitlab token not provided, cannot proceed.")
             sys.exit(1)
         self._gitlab = gitlab.Gitlab(url=f"https://{cfg.GITLAB_URL}", private_token=self._gitlab_token)
+        self._gitlab.auth()
+        self._gitlab_autograder_user_id = self._gitlab.user.id
         logging.info("Gitlab authentication successful")
 
     def process_project(self, project):
@@ -70,14 +73,19 @@ class Autograder:
         emails = []
         members = project.members.list()
         for member in members:
-            if member.access_level >= 40:  # only collect mantainers and above
-                usr = self._gitlab.users.get(member.id)
+            usr = self._gitlab.users.get(member.id)
+            if usr.id == self._gitlab_autograder_user_id:
+                if member.access_level < 20:
+                    logging.warning(f"Autograder access level in {project_identifier} is not Reporter or higher, no point in reporting")
+                    return
+
+            if member.access_level >= 40:  # only collect emails for mantainers and above
                 email = usr.attributes["public_email"]
                 if email:  # some accounts have empty public emails
                     emails.append(email)
 
         if not emails or not emails[0]:
-            logging.info(f"No project members in {project_identifier} have public emails, no point in reporting")
+            logging.warning(f"No project members in {project_identifier} have public emails, no point in reporting")
             return
 
         logging.debug(f"Beggining processing for '{project_identifier}'")
