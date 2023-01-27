@@ -27,7 +27,7 @@ class TestRunner:
     def run_all(self):
         self.rep.append("\nTEST CASES")
 
-        assignments = self.project_path.glob("testcases/*")
+        assignments = cfg.AUTOGRADER_BASE_REPO_CLONE_PATH.glob("testcases/*")
         for assignment in assignments:
             self.rep.append(assignment.stem)
             test_result_files = assignment.glob("*_result.txt")
@@ -59,6 +59,8 @@ class TestRunner:
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE,
                                        start_new_session=True)  # crucial to ensure spawned processes die
+            # https://alexandra-zaharia.github.io/posts/kill-subprocess-and-its-children-on-timeout-python/
+
             process.wait(timeout=1)
             output = process.stdout
         except subprocess.TimeoutExpired as e:

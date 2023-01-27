@@ -22,12 +22,8 @@ class Autograder:
 
     def main(self):
         self.set_up_logging()
-        target_only = cfg.AUTOGRADER_TARGET_ONLY
-        if target_only:
-            logging.info(f"Running autograder in single target mode for project {target_only}")
-            forks = [self._gitlab.projects.get(target_only)]
-        else:
-            forks = cfg.FORKS.keys()
+        self.update_local_repo(cfg.AUTOGRADER_BASE_REPO_CLONE_LOCATION, cfg.AUTOGRADER_BASE_REPO)
+        forks = cfg.FORKS.keys()
         logging.info(f"Found {len(forks)} forks of main project, starting autograding...")
 
         with ThreadPool() as p:
