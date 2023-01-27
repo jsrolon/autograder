@@ -56,22 +56,24 @@ class Autograder:
         rep = reporter.Reporter(project)
 
         clone_location = f"{cfg.AUTOGRADER_WORKING_DIR}/repos/{project}"
+        could_clone = False
         try:
             self.update_local_repo(clone_location, project)
+            could_clone = True
         except Exception:
+            rep.append(f"The autograder couldn't clone your repo. Did you add @jrolon with Reporter access?")
             logging.error(f"Error cloning {project} into {clone_location}, stopping processing")
-            return
 
-        src_location = f"{clone_location}/src"
-        if not os.path.isdir(src_location):
-            rep.append(f"# Expected repository structure not found. Ensure you forked the coursework repo")
-            return
-
-        completed_make = subprocess.run(["make"], cwd=src_location,
-                                        capture_output=cfg.CAPTURE_OUTPUT)
-        rep.append(f"# Compilation {'PASS' if completed_make.returncode == 0 else 'FAILED'}")
-        if completed_make.returncode == 0:
-            test_runner.TestRunner(project, pathlib.Path(clone_location)).run_all()
+        if could_clone:
+            src_location = f"{clone_location}/src"
+            if not os.path.isdir(src_location):
+                rep.append(f"Expected repository structure not found. Did you fork the coursework repo?")
+            else:
+                completed_make = subprocess.run(["make"], cwd=src_location,
+                                                capture_output=cfg.CAPTURE_OUTPUT)
+                rep.append(f"# Compilation {'PASS' if completed_make.returncode == 0 else 'FAILED'}")
+                if completed_make.returncode == 0:
+                    test_runner.TestRunner(project, pathlib.Path(clone_location)).run_all()
 
         rep.send_email()
 

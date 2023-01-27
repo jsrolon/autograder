@@ -75,4 +75,6 @@ class Reporter:
 
     def send_email(self):
         full_message_body = "\n".join(self.message_buffer)
+        if cfg.DEBUG:
+            print(full_message_body)
         mj_send_email(cfg.FORKS[self.project_name], full_message_body, self.project_name)
