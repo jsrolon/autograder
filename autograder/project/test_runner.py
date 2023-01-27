@@ -1,6 +1,8 @@
 import logging
 import subprocess
 import pathlib
+import os
+import signal
 
 from autograder import cfg
 from autograder.project.reporter import Reporter
@@ -51,13 +53,16 @@ class TestRunner:
 
             # actually run the test
             # todo: bubblewrap this
-            completed_process = subprocess.run(f"{binary_path}/mysh < {test_input_path}",
-                                               shell=True,
-                                               capture_output=True,
-                                               timeout=1,
-                                               cwd=binary_path)
-            output = completed_process.stdout
+            process = subprocess.Popen(f"{binary_path}/mysh < {test_input_path}",
+                                       shell=True,
+                                       cwd=binary_path,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE,
+                                       start_new_session=True)  # crucial to ensure spawned processes die
+            process.wait(timeout=1)
+            output = process.stdout
         except subprocess.TimeoutExpired as e:
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             timed_out = True
             if e.output:
                 output = e.output
@@ -68,7 +73,7 @@ class TestRunner:
         # handling weird unicode error thing
         if output:
             try:
-                output = output.decode('utf-8')
+                output = output.read().decode('utf-8')
             except UnicodeError as e:
                 logging.info(f"For {self.project_path} error decoding output on {test}")
                 self.rep.fail(test)
