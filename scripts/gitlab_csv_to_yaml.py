@@ -22,5 +22,5 @@ with open('/Users/jsrolon/Downloads/COMP 310 Team Registration Winter 2023.csv',
         else:
             print(f"{fork_url_as_is} doesnt match expected pattern")
 
-with open("autograder/resources/mapping.yaml", "w") as out:
+with open("../autograder/resources/mapping.yaml", "w") as out:
     yaml.dump(output_dict, out)
