@@ -32,9 +32,9 @@ def mj_send_email(to, body, id):
     }
     result = mailjet.send.create(data=data)
     if result.status_code == 200:
-        logging.info(f"Sent email to {id} (SANDBOX {sandbox})")
+        logging.info(f"(SANDBOX {sandbox}) Sent email to {id} members {to}")
     else:
-        logging.error(f"Email sending to {id} failed with status {result.status_code}")
+        logging.error(f"Email sending to {id} members {to} failed with status {result.status_code}")
 
 
 class Reporter:
@@ -51,8 +51,8 @@ class Reporter:
     def get_reporter(project_identifier: str):
         return Reporter._reporters[project_identifier]
 
-    def __init__(self, project_name: str, emails: List[str]):
-        self._emails = emails
+    def __init__(self, project_name: str):
+        # self._emails = emails
 
         self.project_name = project_name
         self.message_buffer = []
@@ -75,4 +75,4 @@ class Reporter:
 
     def send_email(self):
         full_message_body = "\n".join(self.message_buffer)
-        mj_send_email(self._emails, full_message_body, self.project_name)
+        mj_send_email(cfg.FORKS[self.project_name], full_message_body, self.project_name)

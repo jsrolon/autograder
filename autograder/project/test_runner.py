@@ -70,7 +70,7 @@ class TestRunner:
             try:
                 output = output.decode('utf-8')
             except UnicodeError as e:
-                logging.error(f"For {self.project_path} error decoding output on {test}")
+                logging.info(f"For {self.project_path} error decoding output on {test}")
                 self.rep.fail(test)
                 return
 

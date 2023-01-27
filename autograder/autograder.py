@@ -22,13 +22,12 @@ class Autograder:
 
     def main(self):
         self.set_up_logging()
-        self.set_up_gitlab()
         target_only = cfg.AUTOGRADER_TARGET_ONLY
         if target_only:
             logging.info(f"Running autograder in single target mode for project {target_only}")
             forks = [self._gitlab.projects.get(target_only)]
         else:
-            forks = self.get_forks()
+            forks = cfg.FORKS.keys()
         logging.info(f"Found {len(forks)} forks of main project, starting autograding...")
 
         with ThreadPool() as p:
@@ -52,58 +51,27 @@ class Autograder:
                             level=logging.INFO,
                             handlers=handler_list)
 
-    def get_forks(self):
-        base_project = self._gitlab.projects.get(cfg.AUTOGRADER_GITLAB_BASE_REPO_ID)
-        forks = list(map(lambda fork: self._gitlab.projects.get(fork.id), base_project.forks.list(get_all=True)))
-        return forks
-
-    def set_up_gitlab(self):
-        self._gitlab_token = cfg.AUTOGRADER_GITLAB_TOKEN
-        if self._gitlab_token is None:
-            logging.error("Gitlab token not provided, cannot proceed.")
-            sys.exit(1)
-        self._gitlab = gitlab.Gitlab(url=f"https://{cfg.GITLAB_URL}", private_token=self._gitlab_token)
-        self._gitlab.auth()
-        self._gitlab_autograder_user_id = self._gitlab.user.id
-        logging.info("Gitlab authentication successful")
-
     def process_project(self, project):
-        project_identifier = project.path_with_namespace
+        logging.debug(f"Beggining processing for '{project}'")
+        rep = reporter.Reporter(project)
 
-        emails = []
-        members = project.members.list()
-        for member in members:
-            if member.id == self._gitlab_autograder_user_id:
-                if member.access_level < 20:
-                    logging.warning(f"Autograder access level in {project_identifier} is not Reporter or higher, no point in reporting")
-                    return
-
-            if member.access_level >= 40:  # only collect emails for mantainers and above
-                usr = self._gitlab.users.get(member.id)
-                email = usr.attributes["public_email"]
-                if email:  # some accounts have empty public emails
-                    emails.append(email)
-
-        if not emails or not emails[0]:
-            logging.warning(f"No project members in {project_identifier} have public emails, no point in reporting")
-            return
-
-        logging.debug(f"Beggining processing for '{project_identifier}'")
-        rep = reporter.Reporter(project_identifier, emails)
-
-        clone_location = f"{cfg.AUTOGRADER_WORKING_DIR}/repos/{project.path_with_namespace}"
-        src_location = f"{clone_location}/src"
+        clone_location = f"{cfg.AUTOGRADER_WORKING_DIR}/repos/{project}"
         try:
             self.update_local_repo(clone_location, project)
         except Exception:
-            logging.error(f"Error cloning {project_identifier} into {clone_location}, stopping processing")
+            logging.error(f"Error cloning {project} into {clone_location}, stopping processing")
+            return
+
+        src_location = f"{clone_location}/src"
+        if not os.path.isdir(src_location):
+            rep.append(f"# Expected repository structure not found. Ensure you forked the coursework repo")
             return
 
         completed_make = subprocess.run(["make"], cwd=src_location,
                                         capture_output=cfg.CAPTURE_OUTPUT)
         rep.append(f"# Compilation {'PASS' if completed_make.returncode == 0 else 'FAILED'}")
         if completed_make.returncode == 0:
-            test_runner.TestRunner(project_identifier, pathlib.Path(clone_location)).run_all()
+            test_runner.TestRunner(project, pathlib.Path(clone_location)).run_all()
 
         rep.send_email()
 
@@ -118,7 +86,7 @@ class Autograder:
         branch_to_clone = cfg.AUTOGRADER_CLONE_BRANCH
         clone_result = subprocess.run(
             ["git", "clone", f"--branch={branch_to_clone}", "--single-branch",
-             f"https://oauth2:{self._gitlab_token}@{cfg.GITLAB_URL}/{project.path_with_namespace}.git", clone_location],
+             f"https://oauth2:{cfg.AUTOGRADER_GITLAB_TOKEN}@{cfg.GITLAB_URL}/{project}.git", clone_location],
             capture_output=cfg.CAPTURE_OUTPUT, text=True)
         if clone_result.returncode != 0:
             if clone_result.stderr:

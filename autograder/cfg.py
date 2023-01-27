@@ -1,6 +1,7 @@
 import os
 import pathlib
 import dotenv
+import yaml
 
 from env_flag import env_flag
 
@@ -29,3 +30,6 @@ else:
     CAPTURE_OUTPUT = not DEBUG
 
 GITLAB_URL = os.getenv("AUTOGRADER_GITLAB_URL", "gitlab.cs.mcgill.ca")
+
+with open(f"{os.path.dirname(__file__)}/resources/mapping.yaml", "r") as mapping:
+    FORKS = yaml.safe_load(mapping)
