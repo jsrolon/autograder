@@ -12,8 +12,7 @@ mailjet = Client(
 
 
 def mj_send_email(to, body, id):
-    # sandbox = cfg.DEBUG # TODO: change this on release
-    sandbox = True
+    sandbox = cfg.DEBUG
 
     to_list = list(map(lambda addr: {"Email": addr}, to))
     data = {
