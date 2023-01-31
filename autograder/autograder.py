@@ -69,7 +69,7 @@ class Autograder:
                 rep.append(f"Expected repository structure not found. Did you fork the coursework repo?")
             else:
                 compilation_pass = False
-                completed_make = subprocess.run(["make"], cwd=src_location,
+                completed_make = subprocess.run(["make", "CC=gcc-11"], cwd=src_location,
                                                 capture_output=cfg.CAPTURE_OUTPUT)
                 if completed_make.returncode == 0:  # make might have exited correctly, but mysh might not be there
                     if os.path.isfile(f"{src_location}/mysh"):

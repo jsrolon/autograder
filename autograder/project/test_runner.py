@@ -44,7 +44,8 @@ class TestRunner:
             # clean and recompile
             completed_make_clean = subprocess.run(["make", "clean"],
                                                   timeout=1, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
-            completed_make = subprocess.run(["make"], timeout=1, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
+            completed_make = subprocess.run(["make", "CC=gcc-11"],
+                                            timeout=1, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
 
             if completed_make_clean.returncode != 0 or completed_make.returncode != 0:
                 logging.info(f"Unexpected make failed on {test} for {self.project_path}")
