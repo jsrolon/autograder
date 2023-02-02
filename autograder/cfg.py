@@ -26,10 +26,8 @@ AUTOGRADER_BASE_REPO_CLONE_LOCATION = f"{AUTOGRADER_WORKING_DIR}/repos/{AUTOGRAD
 AUTOGRADER_BASE_REPO_CLONE_PATH = pathlib.Path(AUTOGRADER_BASE_REPO_CLONE_LOCATION)
 
 DEBUG = env_flag("DEBUG")
-capture_output = os.getenv("CAPTURE_OUTPUT")
-if capture_output:
-    CAPTURE_OUTPUT = capture_output
-else:
+CAPTURE_OUTPUT = env_flag("CAPTURE_OUTPUT")
+if not CAPTURE_OUTPUT:
     CAPTURE_OUTPUT = not DEBUG
 
 GITLAB_URL = os.getenv("AUTOGRADER_GITLAB_URL", "gitlab.cs.mcgill.ca")
