@@ -36,6 +36,17 @@ def mj_send_email(to, body, id):
         logging.error(f"Email sending to {id} members {to} failed with status {result.status_code}")
 
 
+RETURN_CODES = {
+    132: "Illegal operation (SIGILL)",
+    133: "Program aborted (SIGTRAP)",
+    134: "Program aborted (SIGABRT)",
+    136: "Program aborted (SIGFPE)",
+    137: "Too much memory",
+    138: "Program aborted (SIGBUS)",
+    139: "Segmentation fault (SIGSEGV)"
+}
+
+
 class Reporter:
     PASS = "PASS"
     FAIL = "FAIL"
@@ -71,6 +82,12 @@ class Reporter:
 
     def timeout(self, test_name: str):
         self.message_buffer.append(f"# {test_name:<25} {self.TIMEOUT}")
+
+    def exit_code(self, test_name: str, exit_code: int):
+        if exit_code in RETURN_CODES:
+            self.message_buffer.append(f"# {test_name:<25} {RETURN_CODES[exit_code]}")
+        else:
+            self.message_buffer.append(f"# {test_name:<25} Abnormal exit code {exit_code}")
 
     def send_email(self):
         full_message_body = "\n".join(self.message_buffer)

@@ -64,6 +64,9 @@ class TestRunner:
 
             process.wait(timeout=1)
             output = process.stdout
+            if process.returncode != 0:
+                self.rep.exit_code(test, process.returncode)
+                return
         except subprocess.TimeoutExpired as e:
             os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             timed_out = True
