@@ -4,9 +4,19 @@ import subprocess
 import pathlib
 import os
 import signal
+import difflib
 
 from autograder import cfg
 from autograder.project.reporter import Reporter
+
+
+def ordered(actual: str, expected: str) -> float:
+    actual_lines = actual.split()
+    expected_lines = expected.split()
+    ratio = difflib.SequenceMatcher(isjunk=None, a=expected_lines, b=actual_lines, autojunk=False).ratio()
+    if ratio < 1:
+        return 0
+    return ratio
 
 
 def jaccard(actual: str, expected: str) -> float:
@@ -29,14 +39,20 @@ class TestRunner:
         self.rep.append("\nTEST CASES")
 
         assignments = cfg.AUTOGRADER_BASE_REPO_CLONE_PATH.glob("testcases/*")
-        for assignment in assignments:
-            self.rep.append(assignment.stem)
-            test_result_files = assignment.glob("*_result.txt")
+        for assignment_path in assignments:
+            assignment_name = assignment_path.stem
+            self.rep.append(assignment_name)
+
+            test_result_files = assignment_path.glob("*_result.txt")
             test_names = map(lambda f: f.stem.replace("_result", ""), test_result_files)
             for test in test_names:
-                self.run_test(test, assignment)
+                order_matters = False
+                if assignment_name in cfg.ORDER_MATTERS:
+                    order_matters = test in cfg.ORDER_MATTERS[assignment_name]
 
-    def run_test(self, test: str, assignment_path: pathlib.Path):
+                self.run_test(test, assignment_path, order_matters)
+
+    def run_test(self, test: str, assignment_path: pathlib.Path, order_matters: bool):
         binary_path = pathlib.Path(self.project_path, "src")
         test_input_path = pathlib.Path(assignment_path, f"{test}.txt")
 
@@ -92,9 +108,12 @@ class TestRunner:
         expected_output_path = pathlib.Path(assignment_path, f"{test}_result.txt")
         with open(expected_output_path, 'r') as expected_output:
             expected_output_str = expected_output.read()
-            jac = jaccard(output, expected_output_str)
-            # todo: add strace verifications?
-            if jac > 0.95:
+            if order_matters:
+                score = ordered(output, expected_output_str)
+            else:
+                score = jaccard(output, expected_output_str)
+
+            if score > 0.95:
                 self.rep.succeed(test)
                 return
 

@@ -32,5 +32,8 @@ if not CAPTURE_OUTPUT:
 
 GITLAB_URL = os.getenv("AUTOGRADER_GITLAB_URL", "gitlab.cs.mcgill.ca")
 
-with open(f"{os.path.dirname(__file__)}/resources/mapping.yaml", "r") as mapping:
-    FORKS = yaml.safe_load(mapping)
+with open(f"{os.path.dirname(__file__)}/resources/mapping.yaml", "r") as f:
+    FORKS = yaml.safe_load(f)
+
+with open(f"{os.path.dirname(__file__)}/resources/order_matters.yml", "r") as f:
+    ORDER_MATTERS = yaml.safe_load(f)
