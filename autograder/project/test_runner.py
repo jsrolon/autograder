@@ -32,7 +32,7 @@ class TestRunner:
         for assignment in assignments:
             self.rep.append(assignment.stem)
             test_result_files = assignment.glob("*_result.txt")
-            test_names = map(lambda f: f.stem.split("_")[0], test_result_files)
+            test_names = map(lambda f: f.stem.replace("_result", ""), test_result_files)
             for test in test_names:
                 self.run_test(test, assignment)
 
