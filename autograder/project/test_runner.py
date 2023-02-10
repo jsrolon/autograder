@@ -14,8 +14,6 @@ def ordered(actual: str, expected: str) -> float:
     actual_lines = actual.split()
     expected_lines = expected.split()
     ratio = difflib.SequenceMatcher(isjunk=None, a=expected_lines, b=actual_lines, autojunk=False).ratio()
-    if ratio < 1:
-        return 0
     return ratio
 
 

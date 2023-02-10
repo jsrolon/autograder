@@ -22,7 +22,8 @@ class Autograder:
 
     def main(self):
         self.set_up_logging()
-        self.update_local_repo(cfg.AUTOGRADER_BASE_REPO_CLONE_LOCATION, cfg.AUTOGRADER_BASE_REPO)
+        # clone the prof's repo to use tests from it
+        self.update_local_repo(cfg.AUTOGRADER_BASE_REPO_CLONE_LOCATION, cfg.AUTOGRADER_BASE_REPO, "main")
         if cfg.AUTOGRADER_TARGET_ONLY:
             forks = [cfg.AUTOGRADER_TARGET_ONLY]
         else:
@@ -82,7 +83,7 @@ class Autograder:
 
         rep.send_email()
 
-    def update_local_repo(self, clone_location: str, project):
+    def update_local_repo(self, clone_location: str, project, branch_to_clone=cfg.AUTOGRADER_CLONE_BRANCH):
         if os.path.isdir(clone_location):
             # apparently some students' code creates directories without read access, so we ensure rwx permissions
             completed_chown = subprocess.run(["chmod", "-R", "744", clone_location], capture_output=cfg.CAPTURE_OUTPUT)
@@ -90,7 +91,6 @@ class Autograder:
                 logging.warning(f"Could not change dir permissions on {clone_location}, clone may fail")
             shutil.rmtree(clone_location)
 
-        branch_to_clone = cfg.AUTOGRADER_CLONE_BRANCH
         clone_result = subprocess.run(
             ["git", "clone", f"--branch={branch_to_clone}", "--single-branch",
              f"https://oauth2:{cfg.AUTOGRADER_GITLAB_TOKEN}@{cfg.GITLAB_URL}/{project}.git", clone_location],
