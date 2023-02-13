@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 
 import csv
+import sys
+
 import yaml
 import re
 from pathlib import Path
 
+if len(sys.argv) != 2:
+    print(f"Error: Need path to CSV file")
+    sys.exit(1)
+
+path_to_csv = sys.argv[1]
+
 fork_regex = re.compile(r'^.+gitlab\.cs\.mcgill\.ca[:\/]([A-z0-9-]+)\/([A-z0-9-]+)')
 output_dict = {}
 
-with open('/Users/jsrolon/Downloads/COMP 310 Team Registration Winter 2023.csv', newline='') as csvfile:
+with open(path_to_csv, newline='') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         fork_url_as_is = row["GitHub Fork URL"]
