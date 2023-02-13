@@ -4,12 +4,9 @@ import os
 import subprocess
 from multiprocessing.pool import ThreadPool
 import pathlib
-import sys
 import shutil
 import pytz
 from datetime import datetime, date
-
-import gitlab
 
 from autograder import cfg
 from autograder.project import reporter, test_runner
@@ -58,7 +55,8 @@ class Autograder:
         clone_location = f"{cfg.AUTOGRADER_WORKING_DIR}/repos/{project}"
         could_clone = False
         try:
-            self.update_local_repo(clone_location, project)
+            last_commit_id = self.update_local_repo(clone_location, project)
+            rep.append(f"As of commit {last_commit_id}")
             could_clone = True
         except Exception:
             rep.append(f"The autograder couldn't clone your repo. Did you add @jrolon with Reporter access?")
@@ -101,7 +99,9 @@ class Autograder:
             raise Exception(f"Git clone failed with status code {clone_result.returncode}")
 
         if cfg.AUTOGRADER_DISABLE_DEADLINE:
-            return
+            last_commit_id = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                cwd=clone_location,
+                encoding='utf-8')
         else:
             # obtain last commit id before deadline
             deadline_naive = datetime.combine(date.today(), datetime.min.time())
@@ -120,3 +120,5 @@ class Autograder:
                 capture_output=cfg.CAPTURE_OUTPUT)
             if checkout_result.returncode != 0:
                 raise Exception(f"Git checkout failed with status code {clone_result.returncode}")
+
+        return last_commit_id
