@@ -43,12 +43,21 @@ class TestRunner:
 
             test_result_files = assignment_path.glob("*_result.txt")
             test_names = map(lambda f: f.stem.replace("_result", ""), test_result_files)
+            num_tests = 0
+            num_passed = 0
             for test in test_names:
+                num_tests += 1
+
                 order_matters = False
                 if assignment_name in cfg.ORDER_MATTERS:
                     order_matters = test in cfg.ORDER_MATTERS[assignment_name]
 
-                self.run_test(test, assignment_path, order_matters)
+                passed = self.run_test(test, assignment_path, order_matters)
+                if passed:
+                    num_passed += 1
+
+            self.rep.append(f"Passed {num_passed} / {num_tests}")
+            self.rep.append(f"{assignment_name} score {num_passed/num_tests:.0%}\n")
 
     def run_test(self, test: str, assignment_path: pathlib.Path, order_matters: bool):
         binary_path = pathlib.Path(self.project_path, "src")
@@ -65,7 +74,7 @@ class TestRunner:
             if completed_make_clean.returncode != 0 or completed_make.returncode != 0:
                 logging.info(f"Unexpected make failed on {test} for {self.project_path}")
                 self.rep.fail(test)
-                return
+                return False
 
             # actually run the test
             bubblewrap_string = ""
@@ -79,11 +88,11 @@ class TestRunner:
                                        start_new_session=True)  # crucial to ensure spawned processes die
             # https://alexandra-zaharia.github.io/posts/kill-subprocess-and-its-children-on-timeout-python/
 
-            process.wait(timeout=10)
+            process.wait(timeout=1)
             output = process.stdout
             if process.returncode != 0:
                 self.rep.exit_code(test, process.returncode)
-                return
+                return False
         except subprocess.TimeoutExpired as e:
             os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             timed_out = True
@@ -91,7 +100,7 @@ class TestRunner:
                 output = e.output
             else:
                 self.rep.timeout(test)
-                return
+                return False
 
         # handling weird unicode error thing
         if output:
@@ -100,7 +109,7 @@ class TestRunner:
             except UnicodeError as e:
                 logging.info(f"For {self.project_path} error decoding output on {test}")
                 self.rep.fail(test)
-                return
+                return False
 
         # comparing outputs
         expected_output_path = pathlib.Path(assignment_path, f"{test}_result.txt")
@@ -113,10 +122,11 @@ class TestRunner:
 
             if score > 0.95:
                 self.rep.succeed(test)
-                return
+                return True
 
         if timed_out:
             self.rep.timeout(test)
-            return
+            return False
 
         self.rep.fail(test)
+        return False

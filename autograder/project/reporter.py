@@ -96,5 +96,8 @@ class Reporter:
 
         if self.project_name in cfg.FORKS:
             mj_send_email(cfg.FORKS[self.project_name], full_message_body, self.project_name)
+            with open(f"{cfg.AUTOGRADER_WORKING_DIR}/{self.project_name.split('/')[0]}.txt", 'w') as f:
+                f.write(full_message_body)
+                f.close()
         else:
             logging.error(f"No emails found for {self.project_name}")
