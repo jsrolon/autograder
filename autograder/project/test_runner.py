@@ -73,22 +73,26 @@ class TestRunner:
 
             if completed_make_clean.returncode != 0 or completed_make.returncode != 0:
                 logging.info(f"Unexpected make failed on {test} for {self.project_path}")
-                self.rep.fail(test)
+                self.rep.append(f"Make failed")
                 return False
+        except:
+            self.rep.append(f"Make failed")
+            return False
 
-            # actually run the test
-            bubblewrap_string = ""
-            if shutil.which("bwrap"):
-                bubblewrap_string = f"bwrap --unshare-all --ro-bind / / --dev-bind {binary_path} {binary_path} "
-            process = subprocess.Popen(f"{bubblewrap_string}{binary_path}/mysh < {test_input_path}",
-                                       shell=True,
-                                       cwd=binary_path,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
-                                       start_new_session=True)  # crucial to ensure spawned processes die
-            # https://alexandra-zaharia.github.io/posts/kill-subprocess-and-its-children-on-timeout-python/
+        # actually run the test
+        bubblewrap_string = ""
+        if shutil.which("bwrap"):
+            bubblewrap_string = f"bwrap --unshare-all --ro-bind / / --dev-bind {binary_path} {binary_path} "
+        process = subprocess.Popen(f"{bubblewrap_string}{binary_path}/mysh < {test_input_path}",
+                                   shell=True,
+                                   cwd=binary_path,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   start_new_session=True)  # crucial to ensure spawned processes die
+        # https://alexandra-zaharia.github.io/posts/kill-subprocess-and-its-children-on-timeout-python/
 
-            process.wait(timeout=1)
+        try:
+            process.wait(timeout=5)
             output = process.stdout
             if process.returncode != 0:
                 self.rep.exit_code(test, process.returncode)
