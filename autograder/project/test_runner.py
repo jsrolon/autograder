@@ -81,8 +81,8 @@ class TestRunner:
 
         # actually run the test
         bubblewrap_string = ""
-        if shutil.which("bwrap"):
-            bubblewrap_string = f"bwrap --unshare-all --ro-bind / / --dev-bind {binary_path} {binary_path} "
+        # if shutil.which("bwrap"):
+        #     bubblewrap_string = f"bwrap --unshare-all --ro-bind / / --dev-bind {binary_path} {binary_path} "
         process = subprocess.Popen(f"{bubblewrap_string}{binary_path}/mysh < {test_input_path}",
                                    shell=True,
                                    cwd=binary_path,
