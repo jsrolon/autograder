@@ -1,5 +1,8 @@
+import datetime
 import os
 import pathlib
+
+import dateparser
 import dotenv
 import yaml
 
@@ -19,7 +22,13 @@ AUTOGRADER_TARGET_ONLY = os.getenv("AUTOGRADER_TARGET_ONLY")
 AUTOGRADER_LOG_MAX_FILES = os.getenv("AUTOGRADER_LOG_MAX_FILES", 7)
 AUTOGRADER_GITLAB_TOKEN = os.getenv("AUTOGRADER_GITLAB_TOKEN")
 AUTOGRADER_CLONE_BRANCH = os.getenv("AUTOGRADER_CLONE_BRANCH", "main")
+
 AUTOGRADER_DISABLE_DEADLINE = env_flag("AUTOGRADER_DISABLE_DEADLINE")
+deadline_val = os.getenv("AUTOGRADER_DEADLINE_VAL")
+if deadline_val:
+    AUTOGRADER_DEADLINE_VAL = dateparser.parse(deadline_val)
+else:
+    AUTOGRADER_DEADLINE_VAL = datetime.date.today()
 
 AUTOGRADER_BASE_REPO = os.getenv("AUTOGRADER_GITLAB_BASE_REPO", default="balmau/comp310-winter23")
 AUTOGRADER_BASE_REPO_CLONE_LOCATION = f"{AUTOGRADER_WORKING_DIR}/repos/{AUTOGRADER_BASE_REPO}"

@@ -20,7 +20,7 @@ class Autograder:
     def main(self):
         self.set_up_logging()
         # clone the prof's repo to use tests from it
-        self.update_local_repo(cfg.AUTOGRADER_BASE_REPO_CLONE_LOCATION, cfg.AUTOGRADER_BASE_REPO, "main")
+        self.update_local_repo(cfg.AUTOGRADER_BASE_REPO_CLONE_LOCATION, cfg.AUTOGRADER_BASE_REPO, "main", True)
         if cfg.AUTOGRADER_TARGET_ONLY:
             forks = [cfg.AUTOGRADER_TARGET_ONLY]
         else:
@@ -81,7 +81,7 @@ class Autograder:
 
         rep.send_email()
 
-    def update_local_repo(self, clone_location: str, project, branch_to_clone=cfg.AUTOGRADER_CLONE_BRANCH):
+    def update_local_repo(self, clone_location: str, project, branch_to_clone=cfg.AUTOGRADER_CLONE_BRANCH, disable_deadline=cfg.AUTOGRADER_DISABLE_DEADLINE):
         if os.path.isdir(clone_location):
             # apparently some students' code creates directories without read access, so we ensure rwx permissions
             completed_chown = subprocess.run(["chmod", "-R", "744", clone_location], capture_output=cfg.CAPTURE_OUTPUT)
@@ -98,13 +98,13 @@ class Autograder:
                 logging.error(f"{clone_result.stderr}")
             raise Exception(f"Git clone failed with status code {clone_result.returncode}")
 
-        if cfg.AUTOGRADER_DISABLE_DEADLINE:
+        if disable_deadline:
             last_commit_id = subprocess.check_output(["git", "rev-parse", "HEAD"],
                 cwd=clone_location,
                 encoding='utf-8')
         else:
             # obtain last commit id before deadline
-            deadline_naive = datetime.combine(date.today(), datetime.min.time())
+            deadline_naive = datetime.combine(cfg.AUTOGRADER_DEADLINE_VAL, datetime.min.time())
             deadline_mtl = pytz.timezone('America/Toronto').localize(deadline_naive)
             deadline_mtl_unix = int(deadline_mtl.timestamp())
             last_commit_id_output = subprocess.check_output([
