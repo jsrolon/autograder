@@ -20,7 +20,8 @@ class Autograder:
     def main(self):
         self.set_up_logging()
         # clone the prof's repo to use tests from it
-        self.update_local_repo(cfg.AUTOGRADER_BASE_REPO_CLONE_LOCATION, cfg.AUTOGRADER_BASE_REPO, "main", True)
+        self.update_local_repo(cfg.AUTOGRADER_BASE_REPO_CLONE_LOCATION, cfg.AUTOGRADER_BASE_REPO,
+                               cfg.AUTOGRADER_BASE_REPO_BRANCH, True)
         if cfg.AUTOGRADER_TARGET_ONLY:
             forks = [cfg.AUTOGRADER_TARGET_ONLY]
         else:
@@ -30,6 +31,8 @@ class Autograder:
         with ThreadPool() as p:
             p.map(self.process_project, forks)
             logging.info("Autograder completed.")
+
+        cfg.AUTOGRADER_CSV_REPORT_FILE.close()
 
     def set_up_logging(self):
         urllib3_logger = logging.getLogger("urllib3")

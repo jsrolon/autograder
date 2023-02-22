@@ -33,6 +33,7 @@ else:
 AUTOGRADER_BASE_REPO = os.getenv("AUTOGRADER_GITLAB_BASE_REPO", default="balmau/comp310-winter23")
 AUTOGRADER_BASE_REPO_CLONE_LOCATION = f"{AUTOGRADER_WORKING_DIR}/repos/{AUTOGRADER_BASE_REPO}"
 AUTOGRADER_BASE_REPO_CLONE_PATH = pathlib.Path(AUTOGRADER_BASE_REPO_CLONE_LOCATION)
+AUTOGRADER_BASE_REPO_BRANCH = os.getenv("AUTOGRADER_BASE_REPO_BRANCH", default="main")
 
 AUTOGRADER_REPORT_PATH = pathlib.Path(f"{AUTOGRADER_WORKING_DIR}/reports/")
 
@@ -49,3 +50,5 @@ with open(f"{os.path.dirname(__file__)}/resources/mapping.yaml", "r") as f:
 with open(f"{os.path.dirname(__file__)}/resources/order_matters.yml", "r") as f:
     ORDER_MATTERS = yaml.safe_load(f)
 
+deadline_str = AUTOGRADER_DEADLINE_VAL.strftime("%d%b%Y")
+AUTOGRADER_CSV_REPORT_FILE = open(f"{AUTOGRADER_WORKING_DIR}/report_{deadline_str}.csv", 'w')

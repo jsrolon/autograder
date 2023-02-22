@@ -1,6 +1,7 @@
+import csv
 import logging
 import os
-from typing import List
+import threading
 
 from mailjet_rest import Client
 
@@ -9,6 +10,14 @@ from autograder import cfg
 mailjet = Client(
     auth=(cfg.MJ_USERNAME, cfg.MJ_PASSWORD),
     version='v3.1')
+
+csv_lock = threading.Lock()
+csv_writer = csv.writer(cfg.AUTOGRADER_CSV_REPORT_FILE)
+
+
+def write_csv_line(team_id, test_name, result):
+    with csv_lock:
+        csv_writer.writerow([team_id, test_name, result])
 
 
 def mj_send_email(to, body, id):
@@ -29,11 +38,14 @@ def mj_send_email(to, body, id):
         ],
         'SandboxMode': sandbox
     }
-    result = mailjet.send.create(data=data)
-    if result.status_code == 200:
-        logging.info(f"(SANDBOX {sandbox}) Sent email to {id} members {to}")
-    else:
-        logging.error(f"Email sending to {id} members {to} failed with status {result.status_code}")
+    try:
+        result = mailjet.send.create(data=data)
+        if result.status_code == 200:
+            logging.info(f"(SANDBOX {sandbox}) Sent email to {id} members {to}")
+        else:
+            logging.error(f"Email sending to {id} members {to} failed with status {result.status_code}")
+    except:
+        logging.error(f"Exception sending email for {id}")
 
 
 RETURN_CODES = {
@@ -76,12 +88,15 @@ class Reporter:
 
     def succeed(self, test_name: str):
         self.message_buffer.append(f"# {test_name:<25} {self.PASS}")
+        write_csv_line(self.project_name, test_name, "PASS")
 
     def fail(self, test_name: str):
         self.message_buffer.append(f"# {test_name:<25} {self.FAIL}")
+        write_csv_line(self.project_name, test_name, "FAIL")
 
     def timeout(self, test_name: str):
         self.message_buffer.append(f"# {test_name:<25} {self.TIMEOUT}")
+        write_csv_line(self.project_name, test_name, "TIMEOUT")
 
     def exit_code(self, test_name: str, exit_code: int):
         if exit_code in RETURN_CODES:
