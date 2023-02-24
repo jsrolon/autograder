@@ -52,7 +52,28 @@ class TestRunner:
                 if assignment_name in cfg.ORDER_MATTERS:
                     order_matters = test in cfg.ORDER_MATTERS[assignment_name]
 
-                passed = self.run_test(test, assignment_path, order_matters)
+                run_multiple = False
+                if assignment_name in cfg.RUN_MULTIPLE:
+                    run_multiple = test in cfg.RUN_MULTIPLE[assignment_name]
+
+                passed = False
+                if run_multiple:
+                    iterations = 10
+                    i = 1
+                    while i <= iterations:
+                        self.rep.enable_per_test_buffer()  # need to reset the temp buffer on every run
+                        passed = self.run_test(test, assignment_path, order_matters)
+                        if not passed:
+                            break
+                        i += 1
+
+                    if not passed:
+                        self.rep.append_same_line(f"on run {i} out of {iterations}")
+
+                    self.rep.flush_per_test_buffer()
+                else:
+                    passed = self.run_test(test, assignment_path, order_matters)
+
                 if passed:
                     num_passed += 1
 
@@ -92,7 +113,7 @@ class TestRunner:
         # https://alexandra-zaharia.github.io/posts/kill-subprocess-and-its-children-on-timeout-python/
 
         try:
-            process.wait(timeout=10)
+            process.wait(timeout=1)
             output = process.stdout
             if process.returncode != 0:
                 self.rep.exit_code(test, process.returncode)

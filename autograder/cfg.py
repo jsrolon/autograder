@@ -50,5 +50,8 @@ with open(f"{os.path.dirname(__file__)}/resources/mapping.yaml", "r") as f:
 with open(f"{os.path.dirname(__file__)}/resources/order_matters.yml", "r") as f:
     ORDER_MATTERS = yaml.safe_load(f)
 
+with open(f"{os.path.dirname(__file__)}/resources/run_multiple.yml", "r") as f:
+    RUN_MULTIPLE = yaml.safe_load(f)
+
 deadline_str = AUTOGRADER_DEADLINE_VAL.strftime("%d%b%Y")
 AUTOGRADER_CSV_REPORT_FILE = open(f"{AUTOGRADER_WORKING_DIR}/report_{deadline_str}.csv", 'w')

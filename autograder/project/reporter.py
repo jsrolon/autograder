@@ -79,30 +79,50 @@ class Reporter:
         self.project_name = project_name
         self.message_buffer = []
 
+        self.per_test_buffer = []
+
+        self.current_buffer = self.message_buffer
+
         self.message_buffer.append(f"COMP310 AUTOGRADER REPORT FOR {project_name}")
 
         Reporter._reporters[project_name] = self
 
     def append(self, message: str):
-        self.message_buffer.append(message)
+        self.current_buffer.append(message)
+
+    def append_same_line(self, message: str):
+        if len(self.current_buffer) > 0:
+            last_str = self.current_buffer[-1]
+            new_str = f"{last_str} {message}"
+            self.current_buffer[-1] = new_str
+        else:
+            self.append(message)
 
     def succeed(self, test_name: str):
-        self.message_buffer.append(f"# {test_name:<25} {self.PASS}")
+        self.current_buffer.append(f"# {test_name:<25} {self.PASS}")
         write_csv_line(self.project_name, test_name, "PASS")
 
     def fail(self, test_name: str):
-        self.message_buffer.append(f"# {test_name:<25} {self.FAIL}")
+        self.current_buffer.append(f"# {test_name:<25} {self.FAIL}")
         write_csv_line(self.project_name, test_name, "FAIL")
 
     def timeout(self, test_name: str):
-        self.message_buffer.append(f"# {test_name:<25} {self.TIMEOUT}")
+        self.current_buffer.append(f"# {test_name:<25} {self.TIMEOUT}")
         write_csv_line(self.project_name, test_name, "TIMEOUT")
 
     def exit_code(self, test_name: str, exit_code: int):
         if exit_code in RETURN_CODES:
-            self.message_buffer.append(f"# {test_name:<25} {RETURN_CODES[exit_code]}")
+            self.current_buffer.append(f"# {test_name:<25} {RETURN_CODES[exit_code]}")
         else:
-            self.message_buffer.append(f"# {test_name:<25} Abnormal exit code {exit_code}")
+            self.current_buffer.append(f"# {test_name:<25} Abnormal exit code {exit_code}")
+
+    def enable_per_test_buffer(self):
+        self.per_test_buffer = []
+        self.current_buffer = self.per_test_buffer
+
+    def flush_per_test_buffer(self):
+        self.message_buffer.extend(self.per_test_buffer)
+        self.current_buffer = self.message_buffer
 
     def send_email(self):
         full_message_body = "\n".join(self.message_buffer)
