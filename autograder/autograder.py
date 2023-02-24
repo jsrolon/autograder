@@ -1,12 +1,13 @@
 import logging
 import logging.handlers
 import os
-import subprocess
-from multiprocessing.pool import ThreadPool
 import pathlib
 import shutil
+import subprocess
+from datetime import datetime
+from multiprocessing.pool import ThreadPool
+
 import pytz
-from datetime import datetime, date
 
 from autograder import cfg
 from autograder.project import reporter, test_runner
@@ -62,13 +63,13 @@ class Autograder:
             rep.append(f"As of commit {last_commit_id}")
             could_clone = True
         except Exception:
-            rep.append(f"The autograder couldn't clone your repo. Did you add @jrolon with Reporter access?")
+            rep.append("The autograder couldn't clone your repo. Did you add @jrolon with Reporter access?")
             logging.error(f"Error cloning {project} into {clone_location}, stopping processing")
 
         if could_clone:
             src_location = f"{clone_location}/src"
             if not os.path.isdir(src_location):
-                rep.append(f"Expected repository structure not found. Did you fork the coursework repo?")
+                rep.append("Expected repository structure not found. Did you fork the coursework repo?")
             else:
                 compilation_pass = False
                 completed_make = subprocess.run(["make", "CC=gcc-11"], cwd=src_location,
@@ -76,11 +77,11 @@ class Autograder:
                 if completed_make.returncode == 0:  # make might have exited correctly, but mysh might not be there
                     if os.path.isfile(f"{src_location}/mysh"):
                         compilation_pass = True
-                        rep.append(f"# Compilation PASS")
+                        rep.append("# Compilation PASS")
                         test_runner.TestRunner(project, pathlib.Path(clone_location)).run_all()
 
                 if not compilation_pass:
-                    rep.append(f"# Compilation FAILED")
+                    rep.append("# Compilation FAILED")
 
         rep.send_email()
 

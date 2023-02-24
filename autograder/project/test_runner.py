@@ -1,5 +1,4 @@
 import logging
-import shutil
 import subprocess
 import pathlib
 import os
@@ -94,10 +93,10 @@ class TestRunner:
 
             if completed_make_clean.returncode != 0 or completed_make.returncode != 0:
                 logging.info(f"Unexpected make failed on {test} for {self.project_path}")
-                self.rep.append(f"Make failed")
+                self.rep.append("Make failed")
                 return False
         except:
-            self.rep.append(f"Make failed")
+            self.rep.append("Make failed")
             return False
 
         # actually run the test
@@ -131,7 +130,7 @@ class TestRunner:
         if output:
             try:
                 output = output.read().decode('utf-8')
-            except UnicodeError as e:
+            except UnicodeError:
                 logging.info(f"For {self.project_path} error decoding output on {test}")
                 self.rep.fail(test)
                 return False
