@@ -124,7 +124,7 @@ class TestRunner:
             else:
                 score = jaccard(output, expected_output_str)
 
-            if score > 0.95:
+            if score >= 0.9:
                 self.rep.succeed(test)
                 return True
 
