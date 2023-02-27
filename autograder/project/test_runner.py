@@ -136,17 +136,18 @@ class TestRunner:
                 return False
 
         # comparing outputs
-        expected_output_path = pathlib.Path(assignment_path, f"{test}_result.txt")
-        with open(expected_output_path, 'r') as expected_output:
-            expected_output_str = expected_output.read()
-            if order_matters:
-                score = ordered(output, expected_output_str)
-            else:
-                score = jaccard(output, expected_output_str)
+        possible_results = assignment_path.glob(f"{test}_result*.txt")
+        for possible_result in possible_results:
+            with open(possible_result, 'r') as expected_output:
+                expected_output_str = expected_output.read()
+                if order_matters:
+                    score = ordered(output, expected_output_str)
+                else:
+                    score = jaccard(output, expected_output_str)
 
-            if score >= 0.9:
-                self.rep.succeed(test)
-                return True
+                if score >= 0.9:
+                    self.rep.succeed(test)
+                    return True
 
         if timed_out:
             self.rep.timeout(test)
