@@ -57,7 +57,7 @@ class TestRunner:
 
                 passed = False
                 if run_multiple:
-                    iterations = 10
+                    iterations = 50
                     i = 1
                     while i <= iterations:
                         self.rep.enable_per_test_buffer()  # need to reset the temp buffer on every run
