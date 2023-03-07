@@ -85,18 +85,24 @@ class TestRunner:
 
         timed_out = False
         try:
-            # clean and recompile
             completed_make_clean = subprocess.run(["make", "clean"],
                                                   timeout=1, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
+            if completed_make_clean.returncode != 0:
+                self.rep.append(f"# {test:<25} 'make clean' failed (return code {completed_make_clean.returncode})")
+                return False
+        except Exception as e:
+            self.rep.append(f"# {test:<25} 'make clean' failed ({e.__class__.__name__})")
+            return False
+
+        try:
             completed_make = subprocess.run(["make", "CC=gcc-11"],
                                             timeout=1, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
 
-            if completed_make_clean.returncode != 0 or completed_make.returncode != 0:
-                logging.info(f"Unexpected make failed on {test} for {self.project_path}")
-                self.rep.append("Make failed")
+            if completed_make.returncode != 0:
+                self.rep.append(f"# {test:<25} 'make' failed (return code {completed_make.returncode})")
                 return False
-        except:
-            self.rep.append("Make failed")
+        except Exception as e:
+            self.rep.append(f"# {test:<25} 'make' failed ({e.__class__.__name__})")
             return False
 
         # actually run the test
