@@ -107,15 +107,18 @@ class Autograder:
                 cwd=clone_location,
                 encoding='utf-8')
         else:
-            # obtain last commit id before deadline
-            deadline_naive = datetime.combine(cfg.AUTOGRADER_DEADLINE_VAL, datetime.min.time())
-            deadline_mtl = pytz.timezone('America/Toronto').localize(deadline_naive)
-            deadline_mtl_unix = int(deadline_mtl.timestamp())
-            last_commit_id_output = subprocess.check_output([
-                "git", "log", f"--before={deadline_mtl_unix}", "--pretty=format:'%H'"],
-                cwd=clone_location,
-                encoding='utf-8')
-            last_commit_id = last_commit_id_output.replace("'", "").splitlines()[0]
+            if cfg.AUTOGRADER_SPECIFIC_COMMIT:
+                last_commit_id = cfg.AUTOGRADER_SPECIFIC_COMMIT
+            else:
+                # obtain last commit id before deadline
+                deadline_naive = datetime.combine(cfg.AUTOGRADER_DEADLINE_VAL, datetime.min.time())
+                deadline_mtl = pytz.timezone('America/Toronto').localize(deadline_naive)
+                deadline_mtl_unix = int(deadline_mtl.timestamp())
+                last_commit_id_output = subprocess.check_output([
+                    "git", "log", f"--before={deadline_mtl_unix}", "--pretty=format:'%H'"],
+                    cwd=clone_location,
+                    encoding='utf-8')
+                last_commit_id = last_commit_id_output.replace("'", "").splitlines()[0]
 
             # checkout to that commit
             checkout_result = subprocess.run(

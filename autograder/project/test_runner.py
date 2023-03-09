@@ -136,6 +136,10 @@ class TestRunner:
         if output:
             try:
                 output = output.read().decode('utf-8')
+                if cfg.DEBUG:
+                    output_file_path = f"{cfg.AUTOGRADER_WORKING_DIR}/{self.rep.project_name.split('/')[0]}_{assignment_path.stem}_{test}.txt"
+                    with open(output_file_path, 'w') as f:
+                        f.writelines(output)
             except UnicodeError:
                 logging.info(f"For {self.project_path} error decoding output on {test}")
                 self.rep.fail(test)
