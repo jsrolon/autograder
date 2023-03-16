@@ -71,10 +71,18 @@ class Autograder:
             if not os.path.isdir(src_location):
                 rep.append("Expected repository structure not found. Did you fork the coursework repo?")
             else:
+                # some students are committing their binaries, we need to run make clean first
+                try:
+                    subprocess.run(["make", "clean"], timeout=1, cwd=src_location, capture_output=cfg.CAPTURE_OUTPUT)
+                except subprocess.SubprocessError:
+                    pass
+
                 compilation_pass = False
                 completed_make = subprocess.run(["make", "CC=gcc-11"], cwd=src_location,
+                                                timeout=1,
                                                 capture_output=cfg.CAPTURE_OUTPUT)
-                if completed_make.returncode == 0:  # make might have exited correctly, but mysh might not be there
+                # make might have exited correctly, but mysh might not be there
+                if completed_make.returncode == 0:
                     if os.path.isfile(f"{src_location}/mysh"):
                         compilation_pass = True
                         rep.append("# Compilation PASS")
