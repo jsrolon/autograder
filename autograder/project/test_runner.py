@@ -95,7 +95,7 @@ class TestRunner:
             return False
 
         try:
-            completed_make = subprocess.run(["make", "CC=gcc-11"],
+            completed_make = subprocess.run(cfg.AUTOGRADER_MAKE_COMMAND_LINE,
                                             timeout=1, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
 
             if completed_make.returncode != 0:
