@@ -36,8 +36,6 @@ AUTOGRADER_BASE_REPO_CLONE_PATH = pathlib.Path(AUTOGRADER_BASE_REPO_CLONE_LOCATI
 AUTOGRADER_BASE_REPO_BRANCH = os.getenv("AUTOGRADER_BASE_REPO_BRANCH", default="main")
 AUTOGRADER_SPECIFIC_COMMIT = os.getenv("AUTOGRADER_SPECIFIC_COMMIT")
 
-AUTOGRADER_MAKE_COMMAND_LINE = ["make", "CC=gcc-11", "framesize=900", "varmemsize=1000"]
-
 AUTOGRADER_REPORT_PATH = pathlib.Path(f"{AUTOGRADER_WORKING_DIR}/reports/")
 
 DEBUG = env_flag("DEBUG")
@@ -60,3 +58,7 @@ AUTOGRADER_MT_ITERATIONS = int(os.getenv("AUTOGRADER_MT_ITERATIONS", default=10)
 
 deadline_str = AUTOGRADER_DEADLINE_VAL.strftime("%d%b%Y")
 AUTOGRADER_CSV_REPORT_FILE = open(f"{AUTOGRADER_WORKING_DIR}/report_{deadline_str}.csv", 'w')
+
+
+def autograder_make_command_line(frame_sz=18, var_sz=10):
+    return ["make", "CC=gcc-11", f"framesize={frame_sz}", f"varmemsize={var_sz}"]

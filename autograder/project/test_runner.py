@@ -1,4 +1,5 @@
 import logging
+import re
 import subprocess
 import pathlib
 import os
@@ -83,6 +84,16 @@ class TestRunner:
         binary_path = pathlib.Path(self.project_path, "src")
         test_input_path = pathlib.Path(assignment_path, f"{test}.txt")
 
+        a3_frame_store_sz = 18
+        a3_var_store_sz = 10
+        if assignment_path.stem == "assignment3":
+            expected_output_path = pathlib.Path(assignment_path, f"{test}_result.txt")
+            with open(expected_output_path, 'r') as expected_output:
+                expected_output_str = expected_output.read()
+                mem_sizes = re.findall(r'(?<=Size = )(\d+)', expected_output_str)
+                if len(mem_sizes) == 2:
+                    a3_frame_store_sz, a3_var_store_sz = mem_sizes
+
         timed_out = False
         try:
             completed_make_clean = subprocess.run(["make", "clean"],
@@ -95,7 +106,7 @@ class TestRunner:
             return False
 
         try:
-            completed_make = subprocess.run(cfg.AUTOGRADER_MAKE_COMMAND_LINE,
+            completed_make = subprocess.run(cfg.autograder_make_command_line(a3_frame_store_sz, a3_var_store_sz),
                                             timeout=1, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
 
             if completed_make.returncode != 0:
