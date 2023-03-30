@@ -97,7 +97,7 @@ class TestRunner:
         timed_out = False
         try:
             completed_make_clean = subprocess.run(["make", "clean"],
-                                                  timeout=1, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
+                                                  timeout=5, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
             if completed_make_clean.returncode != 0:
                 self.rep.append(f"# {test:<25} 'make clean' failed (return code {completed_make_clean.returncode})")
                 return False
@@ -107,7 +107,7 @@ class TestRunner:
 
         try:
             completed_make = subprocess.run(cfg.autograder_make_command_line(a3_frame_store_sz, a3_var_store_sz),
-                                            timeout=1, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
+                                            timeout=5, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
 
             if completed_make.returncode != 0:
                 self.rep.append(f"# {test:<25} 'make' failed (return code {completed_make.returncode})")

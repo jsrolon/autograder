@@ -79,7 +79,7 @@ class Autograder:
 
                 compilation_pass = False
                 completed_make = subprocess.run(cfg.autograder_make_command_line(), cwd=src_location,
-                                                timeout=1,
+                                                timeout=5,
                                                 capture_output=cfg.CAPTURE_OUTPUT)
                 # make might have exited correctly, but mysh might not be there
                 if completed_make.returncode == 0:
