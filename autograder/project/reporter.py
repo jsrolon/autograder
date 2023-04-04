@@ -131,7 +131,7 @@ class Reporter:
     def add_output(self, test_name: str, test_output: str):
         self._output_attachments[test_name] = {
             "ContentType": "text/plain",
-            "Filename": f"{test_name}.txt",
+            "Filename": f"{test_name}_output.txt",
             "Base64Content": base64.b64encode(bytes(test_output, 'utf-8')).decode('utf-8')
         }
 
