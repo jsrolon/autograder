@@ -141,7 +141,7 @@ class Reporter:
             print(full_message_body)
 
         if self.project_name in cfg.FORKS:
-            mj_send_email(cfg.FORKS[self.project_name], full_message_body, self.project_name, self._output_attachments.items())
+            mj_send_email(cfg.FORKS[self.project_name], full_message_body, self.project_name, list(self._output_attachments.values()))
             cfg.AUTOGRADER_REPORT_PATH.mkdir(parents=True, exist_ok=True)
             with open(f"{cfg.AUTOGRADER_WORKING_DIR}/reports/{self.project_name.split('/')[0]}.txt", 'w') as f:
                 f.write(full_message_body)
