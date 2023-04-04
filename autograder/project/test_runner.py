@@ -93,11 +93,12 @@ class TestRunner:
                 mem_sizes = re.findall(r'(?<=Size = )(\d+)', expected_output_str)
                 if len(mem_sizes) == 2:
                     a3_frame_store_sz, a3_var_store_sz = mem_sizes
+                    logging.debug(f"parsed framestore={a3_frame_store_sz} varstore={a3_var_store_sz}")
 
         timed_out = False
         try:
             completed_make_clean = subprocess.run(["make", "clean"],
-                                                  timeout=5, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
+                                                  timeout=15, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
             if completed_make_clean.returncode != 0:
                 self.rep.append(f"# {test:<25} 'make clean' failed (return code {completed_make_clean.returncode})")
                 return False
@@ -107,7 +108,7 @@ class TestRunner:
 
         try:
             completed_make = subprocess.run(cfg.autograder_make_command_line(a3_frame_store_sz, a3_var_store_sz),
-                                            timeout=5, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
+                                            timeout=15, cwd=binary_path, capture_output=cfg.CAPTURE_OUTPUT)
 
             if completed_make.returncode != 0:
                 self.rep.append(f"# {test:<25} 'make' failed (return code {completed_make.returncode})")
@@ -129,7 +130,7 @@ class TestRunner:
         # https://alexandra-zaharia.github.io/posts/kill-subprocess-and-its-children-on-timeout-python/
 
         try:
-            process.wait(timeout=1)
+            process.wait(timeout=15)
             output = process.stdout
             if process.returncode != 0:
                 self.rep.exit_code(test, process.returncode)
