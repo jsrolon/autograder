@@ -81,6 +81,8 @@ class Reporter:
         # self._emails = emails
 
         self.project_name = project_name
+        project_unique_id = project_name.split('/')[0]
+
         self.message_buffer = []
 
         self.per_test_buffer = []
@@ -88,6 +90,14 @@ class Reporter:
         self.current_buffer = self.message_buffer
 
         self.message_buffer.append(f"COMP310 AUTOGRADER REPORT FOR {project_name}")
+
+        self.test_outputs_folder = cfg.AUTOGRADER_TEST_OUTPUTS_PATH / project_unique_id
+        self.can_write_outputs = False
+        try:
+            self.test_outputs_folder.mkdir(parents=True, exist_ok=True)
+            self.can_write_outputs = True
+        except:
+            logging.warning(f"Could not create test output folder for {project_unique_id}")
 
         Reporter._reporters[project_name] = self
 
@@ -134,6 +144,10 @@ class Reporter:
             "Filename": f"{test_name}_output.txt",
             "Base64Content": base64.b64encode(bytes(test_output, 'utf-8')).decode('utf-8')
         }
+
+        if self.can_write_outputs:
+            with open(self.test_outputs_folder / f"{test_name}_output.txt", 'w') as f:
+                f.write(test_output)
 
     def send_email(self):
         full_message_body = "\n".join(self.message_buffer)

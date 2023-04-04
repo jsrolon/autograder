@@ -38,6 +38,9 @@ AUTOGRADER_SPECIFIC_COMMIT = os.getenv("AUTOGRADER_SPECIFIC_COMMIT")
 
 AUTOGRADER_REPORT_PATH = pathlib.Path(f"{AUTOGRADER_WORKING_DIR}/reports/")
 
+now = datetime.datetime.now()
+AUTOGRADER_TEST_OUTPUTS_PATH = pathlib.Path(f"{AUTOGRADER_WORKING_DIR}/test_outputs/{now.strftime('%Y%m%d%H%M%S')}")
+
 DEBUG = env_flag("DEBUG")
 CAPTURE_OUTPUT = env_flag("CAPTURE_OUTPUT")
 if not CAPTURE_OUTPUT:
