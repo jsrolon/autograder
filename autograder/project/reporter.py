@@ -1,3 +1,4 @@
+import base64
 import csv
 import logging
 import os
@@ -20,7 +21,7 @@ def write_csv_line(team_id, test_name, result):
         csv_writer.writerow([team_id, test_name, result])
 
 
-def mj_send_email(to, body, id):
+def mj_send_email(to, body, id, attachments):
     sandbox = cfg.DEBUG
 
     to_list = list(map(lambda addr: {"Email": addr}, to))
@@ -34,6 +35,7 @@ def mj_send_email(to, body, id):
                 "To": to_list,
                 "Subject": "COMP310 Autograder Report",
                 "TextPart": body,
+                "Attachments": attachments
             }
         ],
         'SandboxMode': sandbox
@@ -68,6 +70,8 @@ class Reporter:
     _emails = None
 
     _reporters = {}
+
+    _output_attachments = {}
 
     @staticmethod
     def get_reporter(project_identifier: str):
@@ -124,13 +128,20 @@ class Reporter:
         self.message_buffer.extend(self.per_test_buffer)
         self.current_buffer = self.message_buffer
 
+    def add_output(self, test_name: str, test_output: str):
+        self._output_attachments[test_name] = {
+            "ContentType": "text/plain",
+            "Filename": f"{test_name}.txt",
+            "Base64Content": base64.b64encode(bytes(test_output, 'utf-8')).decode('utf-8')
+        }
+
     def send_email(self):
         full_message_body = "\n".join(self.message_buffer)
         if cfg.DEBUG:
             print(full_message_body)
 
         if self.project_name in cfg.FORKS:
-            mj_send_email(cfg.FORKS[self.project_name], full_message_body, self.project_name)
+            mj_send_email(cfg.FORKS[self.project_name], full_message_body, self.project_name, self._output_attachments.items())
             cfg.AUTOGRADER_REPORT_PATH.mkdir(parents=True, exist_ok=True)
             with open(f"{cfg.AUTOGRADER_WORKING_DIR}/reports/{self.project_name.split('/')[0]}.txt", 'w') as f:
                 f.write(full_message_body)

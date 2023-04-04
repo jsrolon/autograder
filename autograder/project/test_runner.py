@@ -148,6 +148,7 @@ class TestRunner:
         if output:
             try:
                 output = output.read().decode('utf-8')
+                self.rep.add_output(test, output)
                 if cfg.DEBUG:
                     output_file_path = f"{cfg.AUTOGRADER_WORKING_DIR}/{self.rep.project_name.split('/')[0]}_{assignment_path.stem}_{test}.txt"
                     with open(output_file_path, 'w') as f:
