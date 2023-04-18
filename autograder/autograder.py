@@ -78,62 +78,67 @@ class Autograder:
                     pass
 
                 compilation_pass = False
-                # completed_make = subprocess.run(cfg.autograder_make_command_line(), cwd=src_location,
-                #                                 timeout=5,
-                #                                 capture_output=cfg.CAPTURE_OUTPUT)
-                # # make might have exited correctly, but mysh might not be there
-                # if completed_make.returncode == 0:
-                #     if os.path.isfile(f"{src_location}/mysh"):
-                #         compilation_pass = True
-                #         rep.append("# Compilation PASS")
-                #         test_runner.TestRunner(project, pathlib.Path(clone_location)).run_all()
-                #
-                # if not compilation_pass:
-                #     rep.append("# Compilation FAILED")
+                completed_make = subprocess.run(cfg.autograder_make_command_line(), cwd=src_location,
+                                                timeout=5,
+                                                capture_output=cfg.CAPTURE_OUTPUT)
+                # make might have exited correctly, but mysh might not be there
+                if completed_make.returncode == 0:
+                    if os.path.isfile(f"{src_location}/mysh"):
+                        compilation_pass = True
+                        rep.append("# Compilation PASS")
+                        test_runner.TestRunner(project, pathlib.Path(clone_location)).run_all()
+
+                if not compilation_pass:
+                    rep.append("# Compilation FAILED")
 
         rep.send_email()
 
     def update_local_repo(self, clone_location: str, project, branch_to_clone=cfg.AUTOGRADER_CLONE_BRANCH, disable_deadline=cfg.AUTOGRADER_DISABLE_DEADLINE):
-        if os.path.isdir(clone_location):
-            # apparently some students' code creates directories without read access, so we ensure rwx permissions
-            completed_chown = subprocess.run(["chmod", "-R", "744", clone_location], capture_output=cfg.CAPTURE_OUTPUT)
-            if completed_chown.returncode != 0:
-                logging.warning(f"Could not change dir permissions on {clone_location}, clone may fail")
-            shutil.rmtree(clone_location)
-
-        clone_result = subprocess.run(
-            ["git", "clone", f"--branch={branch_to_clone}", "--single-branch",
-             f"https://oauth2:{cfg.AUTOGRADER_GITLAB_TOKEN}@{cfg.GITLAB_URL}/{project}.git", clone_location],
-            capture_output=cfg.CAPTURE_OUTPUT, text=True)
-        if clone_result.returncode != 0:
-            if clone_result.stderr:
-                logging.error(f"{clone_result.stderr}")
-            raise Exception(f"Git clone failed with status code {clone_result.returncode}")
-
-        if disable_deadline:
+        if cfg.AUTOGRADER_USE_LOCAL_COPY:
             last_commit_id = subprocess.check_output(["git", "rev-parse", "HEAD"],
-                cwd=clone_location,
-                encoding='utf-8')
+                                                     cwd=clone_location,
+                                                     encoding='utf-8')
         else:
-            if cfg.AUTOGRADER_SPECIFIC_COMMIT:
-                last_commit_id = cfg.AUTOGRADER_SPECIFIC_COMMIT
-            else:
-                # obtain last commit id before deadline
-                deadline_naive = datetime.combine(cfg.AUTOGRADER_DEADLINE_VAL, datetime.min.time())
-                deadline_mtl = pytz.timezone('America/Toronto').localize(deadline_naive)
-                deadline_mtl_unix = int(deadline_mtl.timestamp())
-                last_commit_id_output = subprocess.check_output([
-                    "git", "log", f"--before={deadline_mtl_unix}", "--pretty=format:'%H'"],
+            if os.path.isdir(clone_location):
+                # apparently some students' code creates directories without read access, so we ensure rwx permissions
+                completed_chown = subprocess.run(["chmod", "-R", "744", clone_location], capture_output=cfg.CAPTURE_OUTPUT)
+                if completed_chown.returncode != 0:
+                    logging.warning(f"Could not change dir permissions on {clone_location}, clone may fail")
+                shutil.rmtree(clone_location)
+
+            clone_result = subprocess.run(
+                ["git", "clone", f"--branch={branch_to_clone}", "--single-branch",
+                 f"https://oauth2:{cfg.AUTOGRADER_GITLAB_TOKEN}@{cfg.GITLAB_URL}/{project}.git", clone_location],
+                capture_output=cfg.CAPTURE_OUTPUT, text=True)
+            if clone_result.returncode != 0:
+                if clone_result.stderr:
+                    logging.error(f"{clone_result.stderr}")
+                raise Exception(f"Git clone failed with status code {clone_result.returncode}")
+
+            if disable_deadline:
+                last_commit_id = subprocess.check_output(["git", "rev-parse", "HEAD"],
                     cwd=clone_location,
                     encoding='utf-8')
-                last_commit_id = last_commit_id_output.replace("'", "").splitlines()[0]
+            else:
+                if cfg.AUTOGRADER_SPECIFIC_COMMIT:
+                    last_commit_id = cfg.AUTOGRADER_SPECIFIC_COMMIT
+                else:
+                    # obtain last commit id before deadline
+                    deadline_naive = datetime.combine(cfg.AUTOGRADER_DEADLINE_VAL, datetime.min.time())
+                    deadline_mtl = pytz.timezone('America/Toronto').localize(deadline_naive)
+                    deadline_mtl_unix = int(deadline_mtl.timestamp())
+                    last_commit_id_output = subprocess.check_output([
+                        "git", "log", f"--before={deadline_mtl_unix}", "--pretty=format:'%H'"],
+                        cwd=clone_location,
+                        encoding='utf-8')
+                    last_commit_id = last_commit_id_output.replace("'", "").splitlines()[0]
 
-            # checkout to that commit
-            checkout_result = subprocess.run(
-                ["git", "checkout", last_commit_id],
-                cwd=clone_location,
-                capture_output=cfg.CAPTURE_OUTPUT)
-            if checkout_result.returncode != 0:
-                raise Exception(f"Git checkout failed with status code {clone_result.returncode}")
+                # checkout to that commit
+                checkout_result = subprocess.run(
+                    ["git", "checkout", last_commit_id],
+                    cwd=clone_location,
+                    capture_output=cfg.CAPTURE_OUTPUT)
+                if checkout_result.returncode != 0:
+                    raise Exception(f"Git checkout failed with status code {clone_result.returncode}")
 
         return last_commit_id
