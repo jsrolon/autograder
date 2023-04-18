@@ -30,8 +30,8 @@ for repo in "${repos_folder}/jchen213/comp-310-winter-23-solution"; do
       actual_output_path="${test_name//.txt/}_actual.txt"
 
       # obtain compilation parameters
-      frame_store_size=$(ggrep --perl-regexp --only-matching "(?<=Frame Store Size = )\d+" "${test_result_path}")
-      var_store_size=$(ggrep --perl-regexp --only-matching "(?<=Variable Store Size = )\d+" "${test_result_path}")
+      frame_store_size=$(grep --perl-regexp --only-matching "(?<=Frame Store Size = )\d+" "${test_result_path}")
+      var_store_size=$(grep --perl-regexp --only-matching "(?<=Variable Store Size = )\d+" "${test_result_path}")
 
       # compile
       pushd "${src_folder_path}" > /dev/null || exit
