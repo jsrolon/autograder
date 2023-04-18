@@ -17,7 +17,11 @@ rm -rf "${a3_reports_folder}"
 mkdir -p "${a3_reports_folder}"
 
 # ensure everything is clean in the working directory
-git -C "${professor_path}" clean -d --force
+ensure_workdir_clean() {
+	git -C "${professor_path}" clean -d --force --quiet
+}
+
+ensure_workdir_clean
 
 #for repo in "${repos_folder}/fsinti/comp310project"; do
 for repo in ${repos_folder}/**/**; do
@@ -71,11 +75,10 @@ for repo in ${repos_folder}/**/**; do
         echo "${test_name} Compilation FAIL" >> "${log_path}"
       fi
       
-      # ensure everything is clean in the working directory
-      git -C "${professor_path}" clean -d --force
+      ensure_workdir_clean
     done
 
-    echo "Score ${passed}/10" >> "${log_path}"; echo; echo
+    echo "Score ${passed}/10" >> "${log_path}"
 
     popd > /dev/null || exit # exit students' repo
   fi
