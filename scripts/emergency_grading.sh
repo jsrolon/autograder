@@ -16,6 +16,9 @@ a3_reports_folder="/data/a3_reports"
 rm -rf "${a3_reports_folder}"
 mkdir -p "${a3_reports_folder}"
 
+# ensure everything is clean in the working directory
+git -C "${professor_path}" clean -d --force
+
 #for repo in "${repos_folder}/fsinti/comp310project"; do
 for repo in ${repos_folder}/**/**; do
   if [[ "${repo}" =~ .*balmau.* ]]; then
@@ -43,10 +46,7 @@ for repo in ${repos_folder}/**/**; do
       if [[ ! -d "${src_folder_path}" ]]; then
           echo "Repo structure not found" >> "${log_path}"
 	        continue
-      fi  
-
-      # ensure everything is clean in the working directory
-      git -C "${professor_path}" clean -d --force
+      fi
 
       # compile
       pushd "${src_folder_path}" > /dev/null || exit # get into src for make
@@ -70,6 +70,9 @@ for repo in ${repos_folder}/**/**; do
         popd > /dev/null || exit # return to student's repo
         echo "${test_name} Compilation FAIL" >> "${log_path}"
       fi
+      
+      # ensure everything is clean in the working directory
+      git -C "${professor_path}" clean -d --force
     done
 
     echo "Score ${passed}/10" >> "${log_path}"; echo; echo
