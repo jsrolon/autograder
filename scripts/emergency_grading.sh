@@ -2,7 +2,7 @@
 
 #set -x
 
-repos_folder="${1:-$HOME/repos}"
+repos_folder="/data/repos"
 
 src_folder_path="src"
 testcases_path="${repos_folder}/balmau/comp310-winter23/testcases/assignment3"
@@ -11,16 +11,24 @@ binary_name="mysh"
 original_binary_path="${src_folder_path}/${binary_name}"
 testcases_binary_path="${testcases_path}/${binary_name}"
 
-for repo in "${repos_folder}/jchen213/comp-310-winter-23-solution"; do
-#for repo in ${repos_folder}/**/**; do
+a3_reports_folder="/data/a3_reports"
+rm -rf "${a3_reports_folder}"
+mkdir -p "${a3_reports_folder}"
+
+#for repo in "${repos_folder}/fsinti/comp310project"; do
+for repo in ${repos_folder}/**/**; do
   if [[ "${repo}" =~ .*balmau.* ]]; then
     true
   else
+    repo_identifier="$(basename $(dirname ${repo}))"
+    log_path="${a3_reports_folder}/${repo_identifier}.txt"
+    echo "Gonna run ${repo_identifier}"
+
     # get into students' repo
     pushd "${repo}" > /dev/null || exit
 
-    echo "EMERGENCY AUTOGRADER REPORT FOR ${repo}"
-    echo "As of commit $(git rev-parse HEAD)"
+    echo "EMERGENCY AUTOGRADER REPORT FOR ${repo_identifier}" >> "${log_path}"
+    echo "As of commit $(git rev-parse HEAD)" >> "${log_path}"
 
     passed=0
     for test_result_path in ${testcases_path}/*_result.txt; do
@@ -34,31 +42,37 @@ for repo in "${repos_folder}/jchen213/comp-310-winter-23-solution"; do
       var_store_size=$(grep --perl-regexp --only-matching "(?<=Variable Store Size = )\d+" "${test_result_path}")
 
       # compile
+      if [[ ! -d "${src_folder_path}" ]]; then
+          echo "Repo structure not found" >> "${log_path}"
+	  continue
+      fi  
+      
       pushd "${src_folder_path}" > /dev/null || exit
       make clean &> /dev/null
       if make CC=gcc-11 framesize="${frame_store_size}" varmemsize="${var_store_size}" &> /dev/null; then
         popd > /dev/null || exit
 
-        cp -f "${original_binary_path}" "${testcases_binary_path}"
-
-        ${testcases_binary_path} < "${test_path}" > "${actual_output_path}"
+        #cp -f "${original_binary_path}" "${testcases_binary_path}"
+	pushd "${testcases_path}" > /dev/null || exit
+	timeout 5 ${repo}/${original_binary_path} < "${test_path}" > "${actual_output_path}"
 
         if diff --ignore-all-space "${test_result_path}" "${actual_output_path}" &> /dev/null; then
-          echo "${test_name} PASS"
+          echo "${test_name} PASS" >> "${log_path}"
           passed=$((passed+1))
         else
-          echo "${test_name} FAIL"
+          echo "${test_name} FAIL" >> "${log_path}"
         fi
 
-        rm -f "${testcases_binary_path}"
+	popd > /dev/null || exit
+        #rm -f "${testcases_binary_path}"
       else
         popd > /dev/null || exit
-        echo "${test_name} Compilation FAIL"
+        echo "${test_name} Compilation FAIL" >> "${log_path}"
       fi
     done
 
-    echo "Score ${passed}/10"
-    sleep 10
+    echo "Score ${passed}/10" >> "${log_path}"
+    sleep 1
 
     # exit students' folder
     popd > /dev/null || exit
