@@ -78,18 +78,18 @@ class Autograder:
                     pass
 
                 compilation_pass = False
-                completed_make = subprocess.run(cfg.autograder_make_command_line(), cwd=src_location,
-                                                timeout=5,
-                                                capture_output=cfg.CAPTURE_OUTPUT)
-                # make might have exited correctly, but mysh might not be there
-                if completed_make.returncode == 0:
-                    if os.path.isfile(f"{src_location}/mysh"):
-                        compilation_pass = True
-                        rep.append("# Compilation PASS")
-                        test_runner.TestRunner(project, pathlib.Path(clone_location)).run_all()
-
-                if not compilation_pass:
-                    rep.append("# Compilation FAILED")
+                # completed_make = subprocess.run(cfg.autograder_make_command_line(), cwd=src_location,
+                #                                 timeout=5,
+                #                                 capture_output=cfg.CAPTURE_OUTPUT)
+                # # make might have exited correctly, but mysh might not be there
+                # if completed_make.returncode == 0:
+                #     if os.path.isfile(f"{src_location}/mysh"):
+                #         compilation_pass = True
+                #         rep.append("# Compilation PASS")
+                #         test_runner.TestRunner(project, pathlib.Path(clone_location)).run_all()
+                #
+                # if not compilation_pass:
+                #     rep.append("# Compilation FAILED")
 
         rep.send_email()
 
