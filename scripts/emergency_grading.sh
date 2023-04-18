@@ -19,6 +19,7 @@ mkdir -p "${a3_reports_folder}"
 # ensure everything is clean in the working directory
 ensure_workdir_clean() {
 	git -C "${professor_path}" clean -d --force --quiet
+	git -C "${professor_path}" reset --hard HEAD
 }
 
 ensure_workdir_clean
